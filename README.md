@@ -23,7 +23,7 @@ A **client-side rendered web application** built with **Next.js**, providing a s
 - **Framework:** Next.js (CSR)
 - **Language:** TypeScript
 - **Authentication:** JWT
-- **State Management:** React Hooks / Context API
+- **State Management:** ZuStand
 - **Real-time:** Socket.IO Client
 - **Styling:** CSS / Tailwind CSS (optional)
 
