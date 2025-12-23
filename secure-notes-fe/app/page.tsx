@@ -15,11 +15,11 @@ export default function NotesPage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const router = useRouter();
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/auth/login');
-    }
-  }, [isAuthenticated, router]);
+  // useEffect(() => {
+  //   if (!isAuthenticated) {
+  //     router.push('/auth/login');
+  //   }
+  // }, [isAuthenticated, router]);
 
   // Demo notes data
   const [notes, setNotes] = useState<Note[]>([
@@ -80,6 +80,10 @@ export default function NotesPage() {
     setNotes((prevNotes) => prevNotes.filter((note) => note.id !== id));
   };
 
+  const handleUpdateNote = (updated: Note) => {
+    setNotes((prevNotes) => prevNotes.map((n) => (n.id === updated.id ? updated : n)));
+  };
+
   return (
     <div className="bg-background-light text-slate-900 h-screen flex overflow-hidden font-display transition-colors duration-200">
       {/* Sidebar */}
@@ -100,7 +104,12 @@ export default function NotesPage() {
             <SortControls />
 
             {/* Notes Grid */}
-            <NotesGrid notes={notes} onTogglePin={handleTogglePin} onArchive={handleArchive} />
+            <NotesGrid
+              notes={notes}
+              onTogglePin={handleTogglePin}
+              onArchive={handleArchive}
+              onUpdateNote={handleUpdateNote}
+            />
           </div>
         </div>
 
