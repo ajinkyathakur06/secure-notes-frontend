@@ -1,8 +1,20 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export default function MobileNav() {
+  const pathname = usePathname();
+
+  const getLinkClass = (path: string) => {
+    const isActive = pathname === path;
+    const baseClass = "flex flex-col items-center justify-center w-full h-full transition-colors";
+    const activeClass = "text-primary";
+    const inactiveClass = "text-slate-500 hover:bg-slate-50";
+
+    return `${baseClass} ${isActive ? activeClass : inactiveClass}`;
+  };
+
   return (
     <>
       {/* Mobile FAB */}
@@ -12,29 +24,32 @@ export default function MobileNav() {
 
       {/* Mobile Bottom Navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 w-full h-16 bg-surface-light border-t border-slate-200 flex items-center justify-around z-30">
-        <Link className="flex flex-col items-center justify-center w-full h-full text-primary" href="/">
-          <span className="material-symbols-outlined fill-1 mb-0.5">description</span>
+        <Link 
+          className={getLinkClass('/')} 
+          href="/"
+        >
+          <span className={`material-symbols-outlined mb-0.5 ${pathname === '/' ? 'fill-1' : ''}`}>description</span>
           <span className="text-[10px] font-medium">Notes</span>
         </Link>
         <Link
-          className="flex flex-col items-center justify-center w-full h-full text-slate-500 hover:bg-slate-50"
+          className={getLinkClass('/requests')}
           href="/requests"
         >
-          <span className="material-symbols-outlined mb-0.5">inbox</span>
+          <span className={`material-symbols-outlined mb-0.5 ${pathname === '/requests' ? 'fill-1' : ''}`}>inbox</span>
           <span className="text-[10px] font-medium">Requests</span>
         </Link>
         <Link
-          className="flex flex-col items-center justify-center w-full h-full text-slate-500 hover:bg-slate-50"
+          className={getLinkClass('/trash')}
           href="/trash"
         >
-          <span className="material-symbols-outlined mb-0.5">delete</span>
+          <span className={`material-symbols-outlined mb-0.5 ${pathname === '/trash' ? 'fill-1' : ''}`}>delete</span>
           <span className="text-[10px] font-medium">Trash</span>
         </Link>
         <Link
-          className="flex flex-col items-center justify-center w-full h-full text-slate-500 hover:bg-slate-50"
+          className={getLinkClass('/account')}
           href="/account"
         >
-          <span className="material-symbols-outlined mb-0.5">account_circle</span>
+          <span className={`material-symbols-outlined mb-0.5 ${pathname === '/account' ? 'fill-1' : ''}`}>account_circle</span>
           <span className="text-[10px] font-medium">Account</span>
         </Link>
       </nav>

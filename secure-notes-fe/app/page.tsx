@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import NotesHeader from '@/components/notes/NotesHeader';
+import NotesHeader from '@/components/NotesHeader';
 import CreateNoteInput from '@/components/notes/CreateNoteInput';
 import SortControls from '@/components/notes/SortControls';
 import NotesGrid from '@/components/notes/NotesGrid';
-import MobileNav from '@/components/notes/MobileNav';
+import MobileNav from '@/components/MobileNav';
 import { Note } from '@/components/notes/NoteCard';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';

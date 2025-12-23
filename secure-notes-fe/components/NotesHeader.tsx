@@ -1,11 +1,13 @@
 'use client';
 
+import Link from 'next/link';
+
 export default function NotesHeader() {
   return (
     <header className="flex items-center justify-between px-4 py-4 md:px-8 md:py-6 bg-background-light z-10">
-      <button className="md:hidden p-2 -ml-2 text-slate-600">
+      {/* <button className="md:hidden p-2 -ml-2 text-slate-600">
         <span className="material-symbols-outlined">menu</span>
-      </button>
+      </button> */}
 
       <div className="flex-1 max-w-2xl mx-auto w-full">
         <label className="relative group flex items-center h-12 w-full shadow-sm focus-within:shadow-md transition-shadow rounded-lg bg-surface-light border border-slate-200">
@@ -32,19 +34,20 @@ export default function NotesHeader() {
         >
           <span className="material-symbols-outlined">grid_view</span>
         </button>
-        <button
-          className="p-2 text-slate-500 hover:text-slate-900 rounded-full hover:bg-slate-200 transition-colors"
+        <Link
+          href="/account"
+          className="p-2 text-slate-500 hover:text-slate-900 rounded-full hover:bg-slate-200 transition-colors flex items-center justify-center"
           title="Settings"
         >
           <span className="material-symbols-outlined">settings</span>
-        </button>
+        </Link>
       </div>
 
-      <button className="md:hidden p-1 ml-2 rounded-full border border-slate-200">
+      {/* <button className="md:hidden p-1 ml-2 rounded-full border border-slate-200">
         <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
           <span className="material-symbols-outlined text-slate-500 text-[20px]">account_circle</span>
         </div>
-      </button>
+      </button> */}
     </header>
   );
 }

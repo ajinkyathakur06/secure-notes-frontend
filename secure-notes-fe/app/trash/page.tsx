@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import NotesHeader from '@/components/notes/NotesHeader';
-import MobileNav from '@/components/notes/MobileNav';
+import NotesHeader from '@/components/NotesHeader';
+import MobileNav from '@/components/MobileNav';
 import { Note } from '@/components/notes/NoteCard';
 import TrashNoteCard from '@/components/notes/TrashNoteCard';
 
