@@ -16,7 +16,7 @@ export default function NotesPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (isAuthenticated) {
       router.push('/auth/login');
     }
   }, [isAuthenticated, router]);

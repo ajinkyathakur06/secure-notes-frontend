@@ -148,11 +148,6 @@ export default function RegisterPage() {
     }
   };
 
-  const handleGoogleSignup = () => {
-    // TODO: Implement Google OAuth signup
-    console.log('Google signup clicked');
-  };
-
   return (
     <div className="bg-background-light min-h-screen flex flex-col font-display text-[#111418]">
       {/* Top Navigation */}
@@ -331,62 +326,33 @@ export default function RegisterPage() {
 
             {/* Submit Button */}
             <button
-              className="w-full flex items-center justify-center rounded-lg bg-primary h-12 px-4 text-white text-base font-bold shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center rounded-lg bg-primary h-12 px-4 text-white text-base font-bold shadow-sm hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               type="submit"
               disabled={isSubmitting}
             >
               {isSubmitting ? 'Creating Account...' : 'Create Account'}
             </button>
 
-            {/* Divider */}
-            <div className="relative py-2">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-[#e5e7eb]"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-[#617289]">Or continue with</span>
-              </div>
+            {/* Mobile Footer Link */}
+            <div className="px-8 pb-8 text-center sm:hidden">
+              <span className="text-sm text-[#617289]">Already have an account?</span>
+              <Link className="text-primary font-bold text-sm ml-1 hover:underline" href="/auth/login">
+                Log in
+              </Link>
             </div>
-
-            {/* Social Login */}
-            <button
-              className="w-full flex items-center justify-center gap-3 rounded-lg border border-[#dbe0e6] bg-white h-12 px-4 text-[#111418] text-sm font-bold hover:bg-gray-50 transition-colors"
-              type="button"
-              onClick={handleGoogleSignup}
-            >
-              <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24">
-                <path
-                  d="M12.0003 20.45c4.6652 0 8.5912-3.926 8.5912-8.5913 0-4.6652-3.926-8.5912-8.5912-8.5912-4.6652 0-8.5913 3.926-8.5913 8.5912 0 4.6653 3.9261 8.5913 8.5913 8.5913z"
-                  fill="#fff"
-                ></path>
-                <path
-                  d="M12.4275 19.3498c3.5575 0 6.6493-2.5298 7.3752-6.0465h-7.3752v-2.3134h10.2312c.1126.6575.1126 1.4875.1126 2.4578 0 4.385-2.9268 8.0199-7.2288 8.0199-4.1725 0-7.5562-3.3838-7.5562-7.5563 0-4.1725 3.3837-7.5562 7.5562-7.5562 2.015 0 3.8213.7225 5.2313 1.905l-1.9288 1.9287c-.8387-.6775-1.9275-1.0775-3.3025-1.0775-2.7337 0-4.9437 2.21-4.9437 4.9438s2.21 4.9437 4.9437 4.9437z"
-                  fill="currentColor"
-                ></path>
-              </svg>
-              Sign up with Google
-            </button>
           </form>
 
-          {/* Mobile Footer Link */}
-          <div className="px-8 pb-8 text-center sm:hidden">
-            <span className="text-sm text-[#617289]">Already have an account?</span>
-            <Link className="text-primary font-bold text-sm ml-1 hover:underline" href="/auth/login">
-              Log in
-            </Link>
+          {/* Footer Trust Badges */}
+          <div className="w-full py-6 flex justify-center gap-8 text-[#617289]">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px]">lock</span>
+              <span className="text-xs font-medium">End-to-end Encryption</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px]">verified_user</span>
+              <span className="text-xs font-medium">SOC2 Compliant</span>
+            </div>
           </div>
-        </div>
-      </div>
-
-      {/* Footer Trust Badges */}
-      <div className="w-full py-6 flex justify-center gap-8 text-[#617289]">
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-[18px]">lock</span>
-          <span className="text-xs font-medium">End-to-end Encryption</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-[18px]">verified_user</span>
-          <span className="text-xs font-medium">SOC2 Compliant</span>
         </div>
       </div>
     </div>
