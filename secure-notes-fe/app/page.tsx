@@ -1,4 +1,4 @@
-'use client';
+'use client'
 
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/notes/Sidebar';
@@ -16,7 +16,7 @@ export default function NotesPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (isAuthenticated) {
       router.push('/auth/login');
     }
   }, [isAuthenticated, router]);
