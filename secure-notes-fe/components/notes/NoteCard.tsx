@@ -15,22 +15,32 @@ interface NoteCardProps {
   note: Note;
   onTogglePin: (id: string) => void;
   onArchive: (id: string) => void;
+  onOpen?: (note: Note, rect?: DOMRect) => void;
 }
 
-export default function NoteCard({ note, onTogglePin, onArchive }: NoteCardProps) {
+export default function NoteCard({ note, onTogglePin, onArchive, onOpen }: NoteCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
     <div
-      className="group relative flex flex-col bg-surface-light rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg transition-all hover:border-primary/50"
+      className="group relative flex flex-col bg-surface-light rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg transition-all hover:border-primary/50 cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={(e) => {
+        if ((e.target as HTMLElement).closest('button')) return;
+        const el = e.currentTarget as HTMLElement;
+        const rect = el.getBoundingClientRect();
+        if (onOpen) onOpen(note, rect);
+      }}
     >
       <div className="p-4 flex flex-col h-full">
         <div className="flex justify-between items-start mb-2">
           <h4 className="font-bold text-slate-900 text-lg flex-1 pr-2">{note.title}</h4>
           <button
-            onClick={() => onTogglePin(note.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onTogglePin(note.id);
+            }}
             className={`p-1 hover:bg-slate-100 rounded-full transition-colors ${
               note.isPinned ? 'text-primary' : 'text-slate-400'
             }`}
@@ -50,13 +60,20 @@ export default function NoteCard({ note, onTogglePin, onArchive }: NoteCardProps
           }`}
         >
           <button
-            onClick={() => onArchive(note.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onArchive(note.id);
+            }}
             className="p-1.5 hover:bg-slate-100 rounded-full text-slate-500"
             title="Archive"
           >
             <span className="material-symbols-outlined text-[18px]">archive</span>
           </button>
-          <button className="p-1.5 hover:bg-slate-100 rounded-full text-slate-500 ml-auto" title="More options">
+          <button
+            onClick={(e) => e.stopPropagation()}
+            className="p-1.5 hover:bg-slate-100 rounded-full text-slate-500 ml-auto"
+            title="More options"
+          >
             <span className="material-symbols-outlined text-[18px]">more_vert</span>
           </button>
         </div>
