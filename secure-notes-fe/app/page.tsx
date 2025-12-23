@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import Sidebar from '@/components/notes/Sidebar';
 import NotesHeader from '@/components/notes/NotesHeader';
 import CreateNoteInput from '@/components/notes/CreateNoteInput';
 import SortControls from '@/components/notes/SortControls';
@@ -85,37 +84,31 @@ export default function NotesPage() {
   };
 
   return (
-    <div className="bg-background-light text-slate-900 h-screen flex overflow-hidden font-display transition-colors duration-200">
-      {/* Sidebar */}
-      <Sidebar />
+    <main className="flex-1 flex flex-col h-full relative overflow-hidden">
+      {/* Header */}
+      <NotesHeader />
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col h-full relative overflow-hidden">
-        {/* Header */}
-        <NotesHeader />
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto px-4 pb-24 md:px-8 md:pb-8">
+        <div className="max-w-7xl mx-auto flex flex-col items-center">
+          {/* Create Note Input */}
+          <CreateNoteInput />
 
-        {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto px-4 pb-24 md:px-8 md:pb-8">
-          <div className="max-w-7xl mx-auto flex flex-col items-center">
-            {/* Create Note Input */}
-            <CreateNoteInput />
+          {/* Sort Controls */}
+          <SortControls />
 
-            {/* Sort Controls */}
-            <SortControls />
-
-            {/* Notes Grid */}
-            <NotesGrid
-              notes={notes}
-              onTogglePin={handleTogglePin}
-              onArchive={handleArchive}
-              onUpdateNote={handleUpdateNote}
-            />
-          </div>
+          {/* Notes Grid */}
+          <NotesGrid
+            notes={notes}
+            onTogglePin={handleTogglePin}
+            onArchive={handleArchive}
+            onUpdateNote={handleUpdateNote}
+          />
         </div>
+      </div>
 
-        {/* Mobile Navigation */}
-        <MobileNav />
-      </main>
-    </div>
+      {/* Mobile Navigation */}
+      <MobileNav />
+    </main>
   );
 }
