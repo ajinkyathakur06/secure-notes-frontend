@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import ClientLayout from "./ClientLayout";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,9 +43,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased `}
       >
-        {/* <Navbar/> */}
-        {/* Commented out the navbar because we will also be having a sidebar in the main layout(HomePage) So we need to fix the logic of the navbar. Until then we will be Importing the navbar in the page.tsx files */}
-        {children}
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );

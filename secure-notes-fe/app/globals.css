@@ -4,6 +4,7 @@
   --background: #f7f7f6;
   --foreground: #171717;
   --primary: #D0BB95;
+  --primary-dark: #d5ad62;
   --background-light: #f7f7f6;
   --background-dark: #1d1a15;
   --surface-light: #ffffff;
@@ -14,6 +15,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
+  --color-primary-dark: var(--primary-dark);
   --color-background-light: var(--background-light);
   --color-background-dark: var(--background-dark);
   --color-surface-light: var(--surface-light);

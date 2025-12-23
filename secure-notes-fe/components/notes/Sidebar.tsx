@@ -3,17 +3,36 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/useAuthStore';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 export default function Sidebar() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const logout = useAuthStore((state) => state.logout);
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleLogout = () => {
     logout();
     router.push('/auth/login');
   };
+
+  const getLinkClass = (path: string) => {
+    const isActive = pathname === path;
+    const baseClass = "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors";
+    const activeClass = "bg-primary/10 text-primary";
+    const inactiveClass = "text-slate-600 hover:bg-slate-100 hover:text-slate-900";
+    
+    return `${baseClass} ${isActive ? activeClass : inactiveClass}`;
+  };
+
+  const getLabelLinkClass = (path: string) => {
+    const isActive = pathname === path;
+    const baseClass = "flex items-center gap-3 px-4 py-2 rounded-lg transition-colors";
+    const activeClass = "bg-primary/10 text-primary";
+    const inactiveClass = "text-slate-600 hover:bg-slate-100";
+    
+    return `${baseClass} ${isActive ? activeClass : inactiveClass}`;
+  }
 
   return (
     <aside className="hidden md:flex w-64 flex-col border-r border-slate-200 bg-surface-light h-full">
@@ -23,33 +42,33 @@ export default function Sidebar() {
         </div>
         <div>
           <h1 className="text-lg font-bold tracking-tight text-slate-900">SecureNotes</h1>
-          <p className="text-xs text-slate-500 font-medium">v2.4.0 Encrypted</p>
+          {/* <p className="text-xs text-slate-500 font-medium">v2.4.0 Encrypted</p> */}
         </div>
       </div>
 
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto custom-scrollbar">
         <Link
-          className="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary transition-colors"
+          className={getLinkClass('/')}
           href="/"
         >
-          <span className="material-symbols-outlined fill-1">description</span>
+          <span className={`material-symbols-outlined ${pathname === '/' ? 'fill-1' : ''}`}>description</span>
           <span className="font-medium text-sm">Notes</span>
         </Link>
         <Link
-          className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+          className={getLinkClass('/requests')}
           href="/requests"
         >
-          <span className="material-symbols-outlined">inbox</span>
+          <span className={`material-symbols-outlined ${pathname === '/requests' ? 'fill-1' : ''}`}>inbox</span>
           <span className="font-medium text-sm">Requests</span>
           <span className="ml-auto bg-slate-200 text-slate-600 text-xs font-bold px-2 py-0.5 rounded-full">
             3
           </span>
         </Link>
         <Link
-          className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+          className={getLinkClass('/trash')}
           href="/trash"
         >
-          <span className="material-symbols-outlined">delete</span>
+          <span className={`material-symbols-outlined ${pathname === '/trash' ? 'fill-1' : ''}`}>delete</span>
           <span className="font-medium text-sm">Trash</span>
         </Link>
 
@@ -58,17 +77,17 @@ export default function Sidebar() {
             Labels
           </p>
           <Link
-            className="flex items-center gap-3 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
+            className={getLabelLinkClass('/label/personal')}
             href="/label/personal"
           >
-            <span className="material-symbols-outlined text-[20px]">label</span>
+            <span className={`material-symbols-outlined text-[20px] ${pathname === '/label/personal' ? 'fill-1' : ''}`}>label</span>
             <span className="font-medium text-sm">Personal</span>
           </Link>
           <Link
-            className="flex items-center gap-3 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
+            className={getLabelLinkClass('/label/work')}
             href="/label/work"
           >
-            <span className="material-symbols-outlined text-[20px]">label</span>
+            <span className={`material-symbols-outlined text-[20px] ${pathname === '/label/work' ? 'fill-1' : ''}`}>label</span>
             <span className="font-medium text-sm">Work</span>
           </Link>
         </div>

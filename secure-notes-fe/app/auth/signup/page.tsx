@@ -159,7 +159,7 @@ export default function RegisterPage() {
           {/* Header Section */}
           <div className="px-8 pt-10 pb-6 text-center">
             <h1 className="text-3xl font-black text-[#111418] tracking-[-0.033em] mb-3">
-              Get started with SafeNote
+              Get started with Secure Note
             </h1>
             <p className="text-[#617289] text-base font-normal">
               Securely store your thoughts, lists, and ideas.
@@ -326,7 +326,7 @@ export default function RegisterPage() {
 
             {/* Submit Button */}
             <button
-              className="w-full flex items-center justify-center rounded-lg bg-primary h-12 px-4 text-white text-base font-bold shadow-sm hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center rounded-lg bg-primary h-12 px-4 text-white text-base font-bold shadow-sm cursor-pointer hover:bg-[var(--primary-dark)] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               type="submit"
               disabled={isSubmitting}
             >
@@ -334,7 +334,7 @@ export default function RegisterPage() {
             </button>
 
             {/* Mobile Footer Link */}
-            <div className="px-8 pb-8 text-center sm:hidden">
+            <div className="px-8 text-center ">
               <span className="text-sm text-[#617289]">Already have an account?</span>
               <Link className="text-primary font-bold text-sm ml-1 hover:underline" href="/auth/login">
                 Log in
@@ -343,7 +343,7 @@ export default function RegisterPage() {
           </form>
 
           {/* Footer Trust Badges */}
-          <div className="w-full py-6 flex justify-center gap-8 text-[#617289]">
+          <div className="w-full flex justify-center gap-8 text-[#617289] mb-8">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-[18px]">lock</span>
               <span className="text-xs font-medium">End-to-end Encryption</span>
