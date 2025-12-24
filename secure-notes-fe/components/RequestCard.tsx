@@ -71,9 +71,9 @@ export const RequestCard = ({ request, onAccept, onReject, onDelete }: RequestCa
         <div className="flex-1 min-w-0 space-y-2">
           {/* Header */}
           <div className="flex items-center flex-wrap gap-2 text-sm">
-            <span className="font-bold text-gray-900 truncate">{request.sender.name}</span>
+            <span className="font-bold text-gray-900 truncate text-base">{request.sender.name}</span>
             <span className="text-gray-400">&bull;</span>
-            <span className="text-gray-600 truncate">{request.sender.email}</span>
+            <span className="text-gray-600 truncate text-sm">{request.sender.email}</span>
             <span className="text-gray-500 text-xs ml-auto sm:ml-0 font-mono font-medium">
               {timeAgo(request.createdAt)}
             </span>
@@ -81,11 +81,11 @@ export const RequestCard = ({ request, onAccept, onReject, onDelete }: RequestCa
 
           {/* Main Content */}
           <div>
-            <p className="text-gray-700 text-sm leading-relaxed font-medium">
-              Requests access to <span className="font-bold text-gray-900 bg-gray-100 px-1.5 py-0.5 rounded text-base">{request.note.title}</span>
+            <p className="text-gray-700 text-base leading-relaxed font-medium">
+              Requests access to <span className="font-bold text-gray-900 bg-gray-100 px-1.5 py-0.5 rounded text-lg">{request.note.title}</span>
             </p>
             {request.description && (
-              <div className="mt-2 text-sm text-gray-600 italic border-l-2 border-gray-300 pl-3 py-1">
+              <div className="mt-2 text-base text-gray-600 italic border-l-2 border-gray-300 pl-3 py-1">
                 "{request.description}"
               </div>
             )}
@@ -104,13 +104,13 @@ export const RequestCard = ({ request, onAccept, onReject, onDelete }: RequestCa
             <>
               <button
                 onClick={onAccept}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#D0BB95] hover:bg-[#C0AB85] active:bg-[#B09B75] rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#D0BB95]/50 shadow-sm"
+                className="flex items-center gap-1.5 px-5 py-2.5 text-base font-semibold text-white bg-[#D0BB95] hover:bg-[#C0AB85] active:bg-[#B09B75] rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#D0BB95]/50 shadow-sm"
               >
                 Accept
               </button>
               <button
                 onClick={onReject}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 hover:text-red-600 hover:border-red-300 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200"
+                className="flex items-center gap-1.5 px-5 py-2.5 text-base font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 hover:text-red-600 hover:border-red-300 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200"
               >
                 Reject
               </button>

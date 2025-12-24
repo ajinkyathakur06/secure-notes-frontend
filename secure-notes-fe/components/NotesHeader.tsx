@@ -5,9 +5,11 @@ import Link from 'next/link';
 export default function NotesHeader() {
   return (
     <header className="flex items-center justify-between px-4 py-4 md:px-8 md:py-6 bg-background-light z-10">
-      {/* <button className="md:hidden p-2 -ml-2 text-slate-600">
-        <span className="material-symbols-outlined">menu</span>
-      </button> */}
+      <div className="md:hidden mr-3">
+         <Link href="/" className="p-2 -ml-2 text-slate-600 hover:text-slate-900 rounded-full hover:bg-slate-100 transition-colors">
+            <span className="material-symbols-outlined">chevron_left</span>
+         </Link>
+      </div>
 
       <div className="flex-1 max-w-2xl mx-auto w-full">
         <label className="relative group flex items-center h-12 w-full shadow-sm focus-within:shadow-md transition-shadow rounded-lg bg-surface-light border border-slate-200">
