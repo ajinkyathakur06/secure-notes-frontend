@@ -12,16 +12,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const login = useAuthStore((state) => state.login);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isHydrated = useAuthStore((state) => state.isHydrated);
   const router = useRouter();
 
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/');
-    }
-  }, [isAuthenticated, router]);
+    // if (isHydrated && isAuthenticated) {
+    //   router.push('/');
+    // }
+  }, [isAuthenticated, isHydrated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +42,7 @@ export default function LoginPage() {
   return (
     <div className="relative flex min-h-screen w-full flex-col bg-background-light overflow-x-hidden transition-colors duration-300">
       {/* Header */}
-      <Navbar/>
+      <Navbar />
       {/* Main Content */}
       <main className="flex flex-1 items-center justify-center p-4">
         <div className="layout-content-container flex flex-col w-full max-w-[480px]">
