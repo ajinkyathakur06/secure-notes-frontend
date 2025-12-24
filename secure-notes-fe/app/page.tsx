@@ -84,6 +84,23 @@ export default function NotesPage() {
     setNotes((prevNotes) => prevNotes.map((n) => (n.id === updated.id ? updated : n)));
   };
 
+  const handleCreateNote = (note: Note) => {
+    // prepend new note to list
+    setNotes((prev) => [{ ...note }, ...prev]);
+  };
+
+  const handleReorder = (fromIndex: number, toIndex: number) => {
+    setNotes((prev) => {
+      if (fromIndex < 0 || fromIndex >= prev.length) return prev;
+      if (toIndex < 0) toIndex = 0;
+      if (toIndex >= prev.length) toIndex = prev.length - 1;
+      const newArr = [...prev];
+      const [moved] = newArr.splice(fromIndex, 1);
+      newArr.splice(toIndex, 0, moved);
+      return newArr;
+    });
+  };
+
   return (
     <div className="bg-background-light text-slate-900 h-screen flex overflow-hidden font-display transition-colors duration-200">
       {/* Sidebar */}
@@ -98,7 +115,7 @@ export default function NotesPage() {
         <div className="flex-1 overflow-y-auto px-4 pb-24 md:px-8 md:pb-8">
           <div className="max-w-7xl mx-auto flex flex-col items-center">
             {/* Create Note Input */}
-            <CreateNoteInput />
+            <CreateNoteInput onCreateNote={handleCreateNote} />
 
             {/* Sort Controls */}
             <SortControls />
@@ -109,6 +126,7 @@ export default function NotesPage() {
               onTogglePin={handleTogglePin}
               onArchive={handleArchive}
               onUpdateNote={handleUpdateNote}
+              onReorder={handleReorder}
             />
           </div>
         </div>

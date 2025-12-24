@@ -9,11 +9,16 @@ interface NotesGridProps {
   onTogglePin: (id: string) => void;
   onArchive: (id: string) => void;
   onUpdateNote: (updated: Note) => void;
+  // now uses indices for precise insertion
+  onReorder: (fromIndex: number, toIndex: number) => void;
 }
 
-export default function NotesGrid({ notes, onTogglePin, onArchive, onUpdateNote }: NotesGridProps) {
+export default function NotesGrid({ notes, onTogglePin, onArchive, onUpdateNote, onReorder }: NotesGridProps) {
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [initialRect, setInitialRect] = useState<DOMRect | null>(null);
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [insertAfter, setInsertAfter] = useState<boolean>(false);
 
   const pinnedNotes = notes.filter((note) => note.isPinned);
   const otherNotes = notes.filter((note) => !note.isPinned);
@@ -32,6 +37,65 @@ export default function NotesGrid({ notes, onTogglePin, onArchive, onUpdateNote 
     onUpdateNote(updated);
   };
 
+  // Drag handlers
+  const handleDragStart = (id: string) => setDraggedId(id);
+
+  // compute whether we should insert after the hovered item based on mouse Y
+  const handleDragOver = (id: string, e: React.DragEvent) => {
+    setDragOverId(id);
+    try {
+      const target = e.currentTarget as HTMLElement;
+      const rect = target.getBoundingClientRect();
+      const middleY = rect.top + rect.height / 2;
+      setInsertAfter(e.clientY > middleY);
+    } catch {
+      setInsertAfter(false);
+    }
+  };
+
+  const handleDrop = (targetId: string | 'END') => {
+    if (!draggedId) return;
+    if (targetId !== 'END' && draggedId === targetId) {
+      setDraggedId(null);
+      setDragOverId(null);
+      return;
+    }
+
+    const fromIndex = notes.findIndex((n) => n.id === draggedId);
+    if (fromIndex === -1) {
+      setDraggedId(null);
+      setDragOverId(null);
+      return;
+    }
+
+    let toIndex: number;
+    if (targetId === 'END') {
+      toIndex = notes.length - 1;
+    } else {
+      const targetIndex = notes.findIndex((n) => n.id === targetId);
+      if (targetIndex === -1) {
+        setDraggedId(null);
+        setDragOverId(null);
+        return;
+      }
+      toIndex = insertAfter ? targetIndex + 1 : targetIndex;
+    }
+
+    // normalize indices after removal
+    let adjustedTo = toIndex;
+    if (fromIndex < toIndex) adjustedTo = toIndex - 1;
+
+    if (onReorder) onReorder(fromIndex, adjustedTo);
+    setDraggedId(null);
+    setDragOverId(null);
+    setInsertAfter(false);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedId(null);
+    setDragOverId(null);
+  };
+
   return (
     <div className="w-full">
       {/* Pinned Notes Section */}
@@ -42,14 +106,37 @@ export default function NotesGrid({ notes, onTogglePin, onArchive, onUpdateNote 
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {pinnedNotes.map((note) => (
-              <NoteCard
+              <div
                 key={note.id}
-                note={note}
-                onTogglePin={onTogglePin}
-                onArchive={onArchive}
-                onOpen={handleOpen}
-              />
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  handleDragOver(note.id);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  handleDrop(note.id);
+                }}
+              >
+                {draggedId && dragOverId === note.id && draggedId !== note.id && (
+                  <div className="h-28 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50" />
+                )}
+                <NoteCard
+                  note={note}
+                  onTogglePin={onTogglePin}
+                  onArchive={onArchive}
+                  onOpen={handleOpen}
+                  onDragStart={handleDragStart}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  onDragEnd={handleDragEnd}
+                  isDragOver={dragOverId === note.id}
+                  isDragging={draggedId === note.id}
+                />
+              </div>
             ))}
+            {draggedId && !dragOverId && (
+              <div className="h-28 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50" />
+            )}
           </div>
         </div>
       )}
@@ -62,14 +149,44 @@ export default function NotesGrid({ notes, onTogglePin, onArchive, onUpdateNote 
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {otherNotes.map((note) => (
-              <NoteCard
+              <div
                 key={note.id}
-                note={note}
-                onTogglePin={onTogglePin}
-                onArchive={onArchive}
-                onOpen={handleOpen}
-              />
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  handleDragOver(note.id);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  handleDrop(note.id);
+                }}
+              >
+                {draggedId && dragOverId === note.id && draggedId !== note.id && (
+                  <div className="h-28 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50" />
+                )}
+                <NoteCard
+                  note={note}
+                  onTogglePin={onTogglePin}
+                  onArchive={onArchive}
+                  onOpen={handleOpen}
+                  onDragStart={handleDragStart}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  onDragEnd={handleDragEnd}
+                  isDragOver={dragOverId === note.id}
+                  isDragging={draggedId === note.id}
+                />
+              </div>
             ))}
+            {draggedId && !dragOverId && (
+              <div
+                className="h-28 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  handleDrop('END');
+                }}
+              />
+            )}
           </div>
         </div>
       )}

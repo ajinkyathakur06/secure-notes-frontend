@@ -1,6 +1,7 @@
-'use client';
+"use client";
 
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
@@ -9,6 +10,13 @@ export default function Sidebar() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const logout = useAuthStore((state) => state.logout);
   const router = useRouter();
+  const pathname = usePathname();
+
+  const isActive = (href: string) => {
+    if (!pathname) return false;
+    if (href === '/') return pathname === '/';
+    return pathname === href || pathname.startsWith(href + '/');
+  };
 
   const handleLogout = () => {
     logout();
@@ -16,27 +24,33 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="hidden md:flex w-64 flex-col border-r border-slate-200 bg-surface-light h-full">
+    <aside className="hidden md:flex w-64 flex-col border-r border-slate-100 bg-yellow-50 h-full">
       <div className="p-6 flex items-center gap-3">
-        <div className="bg-primary/10 p-2 rounded-lg">
-          <span className="material-symbols-outlined text-primary text-3xl">lock</span>
+        <div className="bg-yellow-100 p-2 rounded-lg">
+          <span className="material-symbols-outlined text-yellow-700 text-3xl">lock</span>
         </div>
         <div>
-          <h1 className="text-lg font-bold tracking-tight text-slate-900">SecureNotes</h1>
+          <h1 className="text-lg font-bold tracking-tight text-slate-800">SecureNotes</h1>
           <p className="text-xs text-slate-500 font-medium">v2.4.0 Encrypted</p>
         </div>
       </div>
 
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto custom-scrollbar">
         <Link
-          className="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary transition-colors"
+          className={
+            `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ` +
+            (isActive('/') ? 'bg-yellow-100 text-yellow-800' : 'text-slate-700 hover:bg-yellow-100 hover:text-slate-900')
+          }
           href="/"
         >
           <span className="material-symbols-outlined fill-1">description</span>
           <span className="font-medium text-sm">Notes</span>
         </Link>
         <Link
-          className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+          className={
+            `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ` +
+            (isActive('/requests') ? 'bg-yellow-100 text-yellow-800' : 'text-slate-700 hover:bg-yellow-100 hover:text-slate-900')
+          }
           href="/requests"
         >
           <span className="material-symbols-outlined">inbox</span>
@@ -46,7 +60,10 @@ export default function Sidebar() {
           </span>
         </Link>
         <Link
-          className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+          className={
+            `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ` +
+            (isActive('/trash') ? 'bg-yellow-100 text-yellow-800' : 'text-slate-700 hover:bg-yellow-100 hover:text-slate-900')
+          }
           href="/trash"
         >
           <span className="material-symbols-outlined">delete</span>
@@ -58,14 +75,20 @@ export default function Sidebar() {
             Labels
           </p>
           <Link
-            className="flex items-center gap-3 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
+            className={
+              `flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ` +
+              (isActive('/label/personal') ? 'bg-yellow-100 text-yellow-800' : 'text-slate-700 hover:bg-yellow-100')
+            }
             href="/label/personal"
           >
             <span className="material-symbols-outlined text-[20px]">label</span>
             <span className="font-medium text-sm">Personal</span>
           </Link>
           <Link
-            className="flex items-center gap-3 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
+            className={
+              `flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ` +
+              (isActive('/label/work') ? 'bg-yellow-100 text-yellow-800' : 'text-slate-700 hover:bg-yellow-100')
+            }
             href="/label/work"
           >
             <span className="material-symbols-outlined text-[20px]">label</span>
@@ -74,16 +97,16 @@ export default function Sidebar() {
         </div>
       </nav>
 
-      <div className="p-4 border-t border-slate-200 relative">
+      <div className="p-4 border-t border-slate-100 relative">
         <button 
           onClick={() => setShowProfileMenu(!showProfileMenu)}
-          className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-slate-100 transition-colors text-left"
+          className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-yellow-100 transition-colors text-left"
         >
-          <div className="h-10 w-10 rounded-full bg-slate-200 overflow-hidden relative flex items-center justify-center">
-            <span className="material-symbols-outlined text-slate-500">account_circle</span>
+          <div className="h-10 w-10 rounded-full bg-white overflow-hidden relative flex items-center justify-center border border-slate-100">
+            <span className="material-symbols-outlined text-yellow-700">account_circle</span>
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-sm font-semibold text-slate-900 truncate">Alex Morgan</span>
+            <span className="text-sm font-semibold text-slate-800 truncate">Alex Morgan</span>
             <span className="text-xs text-slate-500 truncate">alex.m@secure.net</span>
           </div>
           <span className="material-symbols-outlined ml-auto text-slate-400">

@@ -16,16 +16,56 @@ interface NoteCardProps {
   onTogglePin: (id: string) => void;
   onArchive: (id: string) => void;
   onOpen?: (note: Note, rect?: DOMRect) => void;
+  onDragStart?: (id: string) => void;
+  onDragOver?: (id: string) => void;
+  onDrop?: (id: string) => void;
+  onDragEnd?: () => void;
+  isDragOver?: boolean;
+  isDragging?: boolean;
 }
 
-export default function NoteCard({ note, onTogglePin, onArchive, onOpen }: NoteCardProps) {
+export default function NoteCard({ note, onTogglePin, onArchive, onOpen, onDragStart, onDragOver, onDrop, onDragEnd, isDragOver, isDragging }: NoteCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
     <div
-      className="group relative flex flex-col bg-surface-light rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg transition-all hover:border-primary/50 cursor-pointer"
+      className={`group relative flex flex-col bg-surface-light rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg transition-all hover:border-primary/50 cursor-pointer ${
+        isDragOver ? 'ring-2 ring-primary/30 translate-y-[-2px]' : ''
+      } ${isDragging ? 'opacity-60' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      draggable
+      onDragStart={(e) => {
+        e.stopPropagation();
+        if (onDragStart) onDragStart(note.id);
+        try {
+          e.dataTransfer?.setData('text/plain', note.id);
+          e.dataTransfer!.effectAllowed = 'move';
+          // Improve drag visuals by using the element as the drag image
+          try {
+            const el = e.currentTarget as HTMLElement;
+            const rect = el.getBoundingClientRect();
+            const offsetX = Math.round(rect.width / 2);
+            const offsetY = Math.round(rect.height / 2);
+            e.dataTransfer!.setDragImage(el, offsetX, offsetY);
+          } catch {}
+        } catch {}
+      }}
+      onDragEnd={(e) => {
+        e.stopPropagation();
+        if (onDragEnd) onDragEnd();
+      }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        try { e.dataTransfer!.dropEffect = 'move'; } catch {}
+        if (onDragOver) onDragOver(note.id);
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (onDrop) onDrop(note.id);
+      }}
       onClick={(e) => {
         if ((e.target as HTMLElement).closest('button')) return;
         const el = e.currentTarget as HTMLElement;
