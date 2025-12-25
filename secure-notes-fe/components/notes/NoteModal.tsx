@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Note } from "./NoteCard";
+import { API } from "@/services/API";
 
 interface NoteModalProps {
   note: Note;
@@ -19,6 +20,28 @@ export default function NoteModal({ note, initialRect, onClose, onTogglePin, onS
   const panelRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Auto-save logic
+  useEffect(() => {
+    const timer = setTimeout(() => {
+        // Only save if changes detected and title/content are not strictly equal to initial prop (though local state is what matters for "latest")
+        // We can just save whatever is current state after delay
+        if (title !== note.title || content !== note.content) {
+            console.log("Auto-saving...");
+            const updatedNote = { ...note, title, content, updatedAt: new Date() };
+            
+            // Call API
+            API.notes.update(note.id, { title, content })
+                .then(() => {
+                    console.log("Auto-save successful");
+                    onSave(updatedNote); // Update parent state
+                })
+                .catch(err => console.error("Auto-save failed", err));
+        }
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [title, content, note, onSave]);
 
   // attachments (file upload)
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -69,8 +92,19 @@ export default function NoteModal({ note, initialRect, onClose, onTogglePin, onS
   }, []);
 
   const handleSave = () => {
-    onSave({ ...note, title, content, updatedAt: new Date() });
-    handleClose();
+    // Manual save also calls API via onSave if parent implements it, but here parent just updates state
+    // We should ensure API is called. Since we have auto-save, this might just be "Close" or "Force Save"
+    // Let's force an immediate API call to be safe before closing
+    const updatedNote = { ...note, title, content, updatedAt: new Date() };
+     API.notes.update(note.id, { title, content })
+        .then(() => {
+            onSave(updatedNote);
+            handleClose();
+        })
+        .catch(err => {
+            console.error("Save failed", err);
+            handleClose(); // Close anyway?
+        });
   };
 
   // Formatting helpers: wrap selected text in textarea

@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useState, useEffect } from 'react';
 import NotesHeader from '@/components/NotesHeader';
@@ -6,65 +6,75 @@ import CreateNoteInput from '@/components/notes/CreateNoteInput';
 import SortControls from '@/components/notes/SortControls';
 import NotesGrid from '@/components/notes/NotesGrid';
 import MobileNav from '@/components/MobileNav';
+import NoteModal from '@/components/notes/NoteModal';
 import { Note } from '@/components/notes/NoteCard';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useRequestsStore } from '@/store/useRequestsStore';
 import { useRouter } from 'next/navigation';
+import { API } from '@/services/API';
 
 export default function NotesPage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const router = useRouter();
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [initialRect, setInitialRect] = useState<DOMRect | null>(null);
 
-  // useEffect(() => {
-  //   if (!isAuthenticated) {
-  //     router.push('/auth/login');
-  //   }
-  // }, [isAuthenticated, router]);
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/auth/login');
+    }
+  }, [isAuthenticated, router]);
 
-  // Demo notes data
-  const [notes, setNotes] = useState<Note[]>([
-    {
-      id: '1',
-      title: 'Project Beta Ideas',
-      content:
-        'Launch strategy for Q4 involves three main phases. 1. Initial user testing. 2. Feedback loop integration. 3. Full scale marketing rollout with targeted campaigns.',
-      isPinned: true,
-      createdAt: new Date('2024-10-15'),
-      updatedAt: new Date('2024-10-20'),
-    },
-    {
-      id: '2',
-      title: 'Wifi Passwords',
-      content: 'Main Office: Secured_5G_v2\nGuest: WelcomeGuest2024!',
-      isPinned: true,
-      createdAt: new Date('2024-10-10'),
-      updatedAt: new Date('2024-10-18'),
-    },
-    {
-      id: '3',
-      title: 'Meeting notes 10/24',
-      content:
-        'Discussed the roadmap for Q1. John brought up the issue with the legacy API endpoints. We agreed to deprecate v1 by March.',
-      isPinned: false,
-      createdAt: new Date('2024-10-24'),
-      updatedAt: new Date('2024-10-24'),
-    },
-    {
-      id: '4',
-      title: 'Japan Trip 2025',
-      content: 'Book flights by November. Check Airbnb in Kyoto. Must visit: Fushimi Inari, Arashiyama.',
-      isPinned: false,
-      createdAt: new Date('2024-10-12'),
-      updatedAt: new Date('2024-10-22'),
-    },
-    {
-      id: '5',
-      title: 'Shopping List',
-      content: 'Milk, Eggs, Bread, Coffee beans, Avocados, Tomatoes, Chicken breast',
-      isPinned: false,
-      createdAt: new Date('2024-10-25'),
-      updatedAt: new Date('2024-10-25'),
-    },
-  ]);
+  // Notes state (initially empty or fetched)
+  const [notes, setNotes] = useState<Note[]>([]);
+
+  // Fetch notes and requests on mount
+  useEffect(() => {
+      if (isAuthenticated) {
+          // Fetch owned notes
+          API.notes.getOwned()
+              .then(res => {
+                  // Map response to Note interface
+                  const mappedNotes = res.data.map((n: any) => ({
+                      id: n.note_id,
+                      title: n.title,
+                      content: n.content || '',
+                      isPinned: false, // Default
+                      createdAt: new Date(n.updatedAt), // Using updatedAt for sorting often
+                      updatedAt: new Date(n.updatedAt),
+                  }));
+                  setNotes(mappedNotes);
+              })
+              .catch(err => console.error("Failed to fetch notes", err));
+
+          // Fetch shared requests
+          useRequestsStore.getState().fetchRequests();
+      }
+  }, [isAuthenticated]);
+
+
+  const handleCreateNote = async () => {
+    try {
+      const res = await API.notes.create({ title: 'Untitled', content: ' ' });
+      const newNoteData = res.data;
+      
+      const newNote: Note = {
+        id: newNoteData.note_id,
+        title: newNoteData.title,
+        content: newNoteData.content,
+        isPinned: false,
+        createdAt: new Date(newNoteData.createdAt),
+        updatedAt: new Date(newNoteData.updatedAt),
+      };
+
+      setNotes(prev => [newNote, ...prev]);
+      setInitialRect(null); // No animation rect for new note creation
+      setSelectedNote(newNote);
+
+    } catch (error) {
+      console.error("Failed to create note", error);
+    }
+  };
 
   const handleTogglePin = (id: string) => {
     setNotes((prevNotes) =>
@@ -73,13 +83,12 @@ export default function NotesPage() {
   };
 
   const handleArchive = (id: string) => {
-    // TODO: Implement archive functionality
     console.log('Archive note:', id);
-    // For now, just remove from list
     setNotes((prevNotes) => prevNotes.filter((note) => note.id !== id));
   };
 
-  const handleUpdateNote = (updated: Note) => {
+  const handleUpdateNote = async (updated: Note) => {
+    // Optimistic update
     setNotes((prevNotes) => prevNotes.map((n) => (n.id === updated.id ? updated : n)));
   };
 
@@ -92,7 +101,7 @@ export default function NotesPage() {
       <div className="flex-1 overflow-y-auto px-4 pb-24 md:px-8 md:pb-8">
         <div className="max-w-7xl mx-auto flex flex-col items-center">
           {/* Create Note Input */}
-          <CreateNoteInput />
+          <CreateNoteInput onClick={handleCreateNote} />
 
           {/* Sort Controls */}
           <SortControls />
@@ -103,12 +112,30 @@ export default function NotesPage() {
             onTogglePin={handleTogglePin}
             onArchive={handleArchive}
             onUpdateNote={handleUpdateNote}
+            onOpen={(note, rect) => {
+                setInitialRect(rect ?? null);
+                setSelectedNote(note);
+            }}
           />
         </div>
       </div>
 
       {/* Mobile Navigation */}
       <MobileNav />
+
+      {/* Note Modal */}
+      {selectedNote && (
+        <NoteModal
+          note={selectedNote}
+          initialRect={initialRect ?? undefined}
+          onClose={() => {
+              setSelectedNote(null);
+              setInitialRect(null);
+          }}
+          onTogglePin={handleTogglePin}
+          onSave={handleUpdateNote}
+        />
+      )}
     </main>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import NotesHeader from '@/components/NotesHeader';
 import MobileNav from '@/components/MobileNav';
 import ConfirmationModal from '@/components/ConfirmationModal';
@@ -10,14 +10,24 @@ import { useRouter } from 'next/navigation';
 export default function ProfilePage() {
   const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
+  const user = useAuthStore((state) => state.user);
   
-  // Mock user data - in a real app, this would come from the store or API
   const [formData, setFormData] = useState({
-    name: 'Alex Morgan',
-    email: 'alex.m@secure.net',
+    name: '',
+    email: '',
     currentPassword: '',
     newPassword: '',
   });
+
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        name: user.name,
+        email: user.email,
+      }));
+    }
+  }, [user]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);

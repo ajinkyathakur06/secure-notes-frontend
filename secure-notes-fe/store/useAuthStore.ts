@@ -2,8 +2,16 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import axios from 'axios';
 
+interface User {
+    user_id: string;
+    name: string;
+    email: string;
+    createdAt: string;
+}
+
 interface AuthState {
     token: string | null;
+    user: User | null;
     isAuthenticated: boolean;
     login: (email: string, password: string) => Promise<void>;
     signup: (name: string, email: string, password: string) => Promise<void>;
@@ -11,12 +19,13 @@ interface AuthState {
 }
 
 // You can change this to your actual backend URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:3000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL;
 
 export const useAuthStore = create<AuthState>()(
     persist(
         (set) => ({
             token: null,
+            user: null,
             isAuthenticated: false,
             login: async (email, password) => {
                 try {
@@ -25,10 +34,20 @@ export const useAuthStore = create<AuthState>()(
                         password,
                     });
 
-                    // Assuming the response structure matches the requirement: { access_token: "..." }
                     const token = response.data.access_token;
 
-                    set({ token, isAuthenticated: true });
+                    // Fetch user profile immediately
+                    const profileResponse = await axios.get(`${API_BASE_URL}/users/me`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    });
+
+                    set({
+                        token,
+                        user: profileResponse.data,
+                        isAuthenticated: true
+                    });
                 } catch (error: any) {
                     console.error("Login error:", error);
                     // Extract error message from axios response if available
@@ -52,12 +71,16 @@ export const useAuthStore = create<AuthState>()(
                 }
             },
             logout: () => {
-                set({ token: null, isAuthenticated: false });
+                set({ token: null, user: null, isAuthenticated: false });
             },
         }),
         {
             name: 'auth-storage', // name of the item in the storage (must be unique)
-            partialize: (state) => ({ token: state.token, isAuthenticated: state.isAuthenticated }), // only persist token and auth status
+            partialize: (state) => ({
+                token: state.token,
+                user: state.user,
+                isAuthenticated: state.isAuthenticated
+            }), // only persist token, user and auth status
         }
     )
 );
