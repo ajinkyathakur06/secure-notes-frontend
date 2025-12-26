@@ -20,7 +20,7 @@ export default function NotesPage() {
   const [initialRect, setInitialRect] = useState<DOMRect | null>(null);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (isAuthenticated) {
       router.push('/auth/login');
     }
   }, [isAuthenticated, router]);
