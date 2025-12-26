@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
+import { CollaboratorPanel } from '@/components/collab/CollaboratorPanel';
 
 export default function ClientLayout({
   children,
@@ -18,6 +19,7 @@ export default function ClientLayout({
   return (
     <div className="bg-background-light text-slate-900 h-screen flex overflow-hidden font-display transition-colors duration-200">
       <Sidebar />
+      <CollaboratorPanel />
       {children}
     </div>
   );
