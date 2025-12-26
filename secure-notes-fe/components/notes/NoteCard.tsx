@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { CollaboratorButton } from '../collab/CollaboratorButton';
 
 export interface Note {
   id: string;
@@ -17,6 +18,7 @@ interface NoteCardProps {
   onArchive: (id: string) => void;
   onOpen?: (note: Note, rect?: DOMRect) => void;
 }
+
 
 export default function NoteCard({ note, onTogglePin, onArchive, onOpen }: NoteCardProps) {
   const [isHovered, setIsHovered] = useState(false);
@@ -41,9 +43,8 @@ export default function NoteCard({ note, onTogglePin, onArchive, onOpen }: NoteC
               e.stopPropagation();
               onTogglePin(note.id);
             }}
-            className={`p-1 hover:bg-slate-100 rounded-full transition-colors ${
-              note.isPinned ? 'text-primary' : 'text-slate-400'
-            }`}
+            className={`p-1 hover:bg-slate-100 rounded-full transition-colors ${note.isPinned ? 'text-primary' : 'text-slate-400'
+              }`}
             title={note.isPinned ? 'Unpin' : 'Pin'}
           >
             <span className={`material-symbols-outlined text-[18px] ${note.isPinned ? 'fill-1' : ''}`}>
@@ -55,10 +56,10 @@ export default function NoteCard({ note, onTogglePin, onArchive, onOpen }: NoteC
         <p className="text-slate-600 text-sm line-clamp-6 mb-3">{note.content}</p>
 
         <div
-          className={`mt-auto pt-2 flex items-center gap-2 transition-opacity ${
-            isHovered ? 'opacity-100' : 'opacity-0'
-          }`}
+          className={`mt-auto pt-2 flex items-center gap-1 transition-opacity ${isHovered ? 'opacity-100' : 'opacity-0'
+            }`}
         >
+          <CollaboratorButton noteId={note.id} />
           <button
             onClick={(e) => {
               e.stopPropagation();

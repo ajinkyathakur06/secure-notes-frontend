@@ -3,6 +3,7 @@
 import { usePathname, useNavigation } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import Loader from '@/components/Loader';
+import { CollaboratorPanel } from '@/components/collab/CollaboratorPanel';
 
 export default function ClientLayout({
   children,
@@ -22,6 +23,7 @@ export default function ClientLayout({
   return (
     <div className="bg-background-light text-slate-900 h-screen flex overflow-hidden font-display transition-colors duration-200">
       <Sidebar />
+      <CollaboratorPanel />
       {children}
       {isRouting && <Loader fullScreen />}
     </div>

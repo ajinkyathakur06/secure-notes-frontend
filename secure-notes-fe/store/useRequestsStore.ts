@@ -48,10 +48,9 @@ export const useRequestsStore = create<RequestsState>((set, get) => ({
     set({ isLoading: true });
     try {
       await API.share.respondToRequest({ requestId, action: 'ACCEPT' });
+      // Remove from pending list after accepting
       set((state) => ({
-        requests: state.requests.map((req) =>
-          req.request_id === requestId ? { ...req, status: 'ACCEPTED' as const } : req
-        ),
+        requests: state.requests.filter((req) => req.request_id !== requestId),
         isLoading: false,
       }));
     } catch (error: any) {
@@ -64,10 +63,9 @@ export const useRequestsStore = create<RequestsState>((set, get) => ({
     set({ isLoading: true });
     try {
       await API.share.respondToRequest({ requestId, action: 'REJECT' });
+      // Remove from pending list after rejecting
       set((state) => ({
-        requests: state.requests.map((req) =>
-          req.request_id === requestId ? { ...req, status: 'REJECTED' as const } : req
-        ),
+        requests: state.requests.filter((req) => req.request_id !== requestId),
         isLoading: false,
       }));
     } catch (error: any) {

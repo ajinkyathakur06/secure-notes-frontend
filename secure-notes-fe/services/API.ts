@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useAuthStore } from '@/store/useAuthStore';
 
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL;
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:3001';
 
 const api = axios.create({
     baseURL: API_URL,
@@ -53,7 +53,7 @@ export interface UpdateProfileDto {
 
 export interface ShareRequestDto {
     noteId: string;
-    receiverId: string;
+    receiverEmail: string;
     permission: 'READ_ONLY' | 'EDIT';
 }
 
@@ -85,6 +85,7 @@ export const API = {
             // return api.get(`/notes/${noteId}/download`, { responseType: 'blob' });
         },
         getOwned: () => api.get('/notes/owned'),
+        getShared: () => api.get('/notes/shared'),
         getTrash: () => api.get('/notes/trash'),
         restore: (noteId: string) => api.patch(`/notes/${noteId}/restore`),
     },

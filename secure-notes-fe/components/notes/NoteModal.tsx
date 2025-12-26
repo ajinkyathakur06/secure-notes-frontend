@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Note } from "./NoteCard";
 import { API } from "@/services/API";
+import { CollaboratorButton } from "../collab/CollaboratorButton";
 
 interface NoteModalProps {
   note: Note;
@@ -24,20 +25,20 @@ export default function NoteModal({ note, initialRect, onClose, onTogglePin, onS
   // Auto-save logic
   useEffect(() => {
     const timer = setTimeout(() => {
-        // Only save if changes detected and title/content are not strictly equal to initial prop (though local state is what matters for "latest")
-        // We can just save whatever is current state after delay
-        if (title !== note.title || content !== note.content) {
-            console.log("Auto-saving...");
-            const updatedNote = { ...note, title, content, updatedAt: new Date() };
-            
-            // Call API
-            API.notes.update(note.id, { title, content })
-                .then(() => {
-                    console.log("Auto-save successful");
-                    onSave(updatedNote); // Update parent state
-                })
-                .catch(err => console.error("Auto-save failed", err));
-        }
+      // Only save if changes detected and title/content are not strictly equal to initial prop (though local state is what matters for "latest")
+      // We can just save whatever is current state after delay
+      if (title !== note.title || content !== note.content) {
+        console.log("Auto-saving...");
+        const updatedNote = { ...note, title, content, updatedAt: new Date() };
+
+        // Call API
+        API.notes.update(note.id, { title, content })
+          .then(() => {
+            console.log("Auto-save successful");
+            onSave(updatedNote); // Update parent state
+          })
+          .catch(err => console.error("Auto-save failed", err));
+      }
     }, 2000);
 
     return () => clearTimeout(timer);
@@ -45,11 +46,6 @@ export default function NoteModal({ note, initialRect, onClose, onTogglePin, onS
 
   // attachments (file upload)
   const [attachments, setAttachments] = useState<File[]>([]);
-
-  // collaborators
-  const [collaborators, setCollaborators] = useState<string[]>([]);
-  const [showCollaborator, setShowCollaborator] = useState(false);
-  const [collabInput, setCollabInput] = useState('');
 
   // format menu
   const [showFormatMenu, setShowFormatMenu] = useState(false);
@@ -88,7 +84,7 @@ export default function NoteModal({ note, initialRect, onClose, onTogglePin, onS
         });
       });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSave = () => {
@@ -96,15 +92,15 @@ export default function NoteModal({ note, initialRect, onClose, onTogglePin, onS
     // We should ensure API is called. Since we have auto-save, this might just be "Close" or "Force Save"
     // Let's force an immediate API call to be safe before closing
     const updatedNote = { ...note, title, content, updatedAt: new Date() };
-     API.notes.update(note.id, { title, content })
-        .then(() => {
-            onSave(updatedNote);
-            handleClose();
-        })
-        .catch(err => {
-            console.error("Save failed", err);
-            handleClose(); // Close anyway?
-        });
+    API.notes.update(note.id, { title, content })
+      .then(() => {
+        onSave(updatedNote);
+        handleClose();
+      })
+      .catch(err => {
+        console.error("Save failed", err);
+        handleClose(); // Close anyway?
+      });
   };
 
   // Formatting helpers: wrap selected text in textarea
@@ -132,14 +128,6 @@ export default function NoteModal({ note, initialRect, onClose, onTogglePin, onS
     if (type === 'code') wrapSelection('`');
   };
 
-  // Collaborators
-  const addCollaborator = () => {
-    const val = collabInput.trim();
-    if (!val) return;
-    setCollaborators((prev) => [...prev, val]);
-    setCollabInput('');
-  };
-  const removeCollaborator = (idx: number) => setCollaborators((prev) => prev.filter((_, i) => i !== idx));
 
   const handleClose = () => {
     if (initialRect && panelRef.current) {
@@ -240,37 +228,9 @@ export default function NoteModal({ note, initialRect, onClose, onTogglePin, onS
 
             {/* Color and lock buttons removed per request */}
 
-            <div className="relative">
-              <button
-                onClick={() => setShowCollaborator((s) => !s)}
-                className="p-2 rounded hover:bg-slate-100"
-                title="Add collaborators"
-              >
-                <span className="material-symbols-outlined">person_add</span>
-              </button>
-              {showCollaborator && (
-                <div className="absolute left-0 mt-2 w-64 bg-white border rounded shadow p-3 z-30">
-                  <div className="flex gap-2 mb-2">
-                    <input
-                      value={collabInput}
-                      onChange={(e) => setCollabInput(e.target.value)}
-                      placeholder="email@example.com"
-                      className="flex-1 border rounded px-2 py-1 text-sm"
-                    />
-                    <button onClick={addCollaborator} className="px-3 bg-primary text-white rounded">Add</button>
-                  </div>
-                  <div className="flex flex-col gap-1 max-h-40 overflow-auto">
-                    {collaborators.map((c, i) => (
-                      <div key={i} className="flex items-center justify-between text-sm text-slate-700 border-b pb-1">
-                        <span>{c}</span>
-                        <button onClick={() => removeCollaborator(i)} className="text-slate-400">Remove</button>
-                      </div>
-                    ))}
-                    {collaborators.length === 0 && <div className="text-sm text-slate-400">No collaborators</div>}
-                  </div>
-                </div>
-              )}
-            </div>
+
+            <CollaboratorButton noteId={note.id} />
+
 
             <input ref={fileInputRef} type="file" multiple className="hidden" onChange={(e) => {
               const files = e.target.files;
