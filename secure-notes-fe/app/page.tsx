@@ -21,7 +21,7 @@ export default function NotesPage() {
 
   // TEMPORARILY DISABLED FOR UI TESTING - UNCOMMENT BEFORE PRODUCTION
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (isAuthenticated) {
       router.push('/auth/login');
     }
   }, [isAuthenticated, router]);

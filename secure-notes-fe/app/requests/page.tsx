@@ -1,11 +1,12 @@
 // app/requests/page.tsx
-'use client';
+"use client";
 
 import { useEffect, useState } from 'react';
 import { useRequestsStore } from '@/store/useRequestsStore';
 import { RequestList } from '@/components/RequestList';
 import { RequestCard } from '@/components/RequestCard';
 import NotesHeader from '@/components/NotesHeader';
+import Loader from '@/components/Loader';
 
 export default function RequestsPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -32,14 +33,7 @@ export default function RequestsPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-[#f7f7f6]">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-[#D0BB95] border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-sm text-gray-500 font-medium tracking-wide">LOADING REQUESTS...</p>
-        </div>
-      </div>
-    );
+    return <Loader fullScreen />;
   }
 
   const getSectionClasses = (id: string) => {

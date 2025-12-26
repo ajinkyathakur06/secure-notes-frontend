@@ -1,7 +1,8 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useNavigation } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
+import Loader from '@/components/Loader';
 import { CollaboratorPanel } from '@/components/collab/CollaboratorPanel';
 
 export default function ClientLayout({
@@ -11,6 +12,9 @@ export default function ClientLayout({
 }) {
   const pathname = usePathname();
   const isRestrictedPage = pathname.startsWith('/auth/login') || pathname.startsWith('/auth/signup');
+  // `useNavigation` may not exist in older Next versions. Call it safely.
+  const navigation = typeof useNavigation === 'function' ? useNavigation() : null;
+  const isRouting = navigation?.state === 'loading';
 
   if (isRestrictedPage) {
     return <>{children}</>;
@@ -21,6 +25,7 @@ export default function ClientLayout({
       <Sidebar />
       <CollaboratorPanel />
       {children}
+      {isRouting && <Loader fullScreen />}
     </div>
   );
 }
