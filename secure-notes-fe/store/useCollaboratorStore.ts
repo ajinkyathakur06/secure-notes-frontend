@@ -81,8 +81,39 @@ export const useCollaboratorStore = create<CollaboratorStoreState>((set, get) =>
             set({ collaborators, isLoading: false });
         } catch (error: any) {
             console.error('Error fetching collaborators:', error);
-            // For now, fail silently or show empty list if field missing, regular error if network fail
-            set({ isLoading: false }); // Don't set global error to avoid blocking UI unnecessarily
+
+            // FOR UI TESTING: If 401 (not authenticated), show mock collaborators
+            if (error.response?.status === 401) {
+                console.log('🎭 Loading mock collaborators for UI testing...');
+                const mockCollaborators: Collaborator[] = [
+                    {
+                        userId: 'mock-1',
+                        name: 'John Doe',
+                        email: 'john@example.com',
+                        permission: 'EDIT',
+                        status: 'ACCEPTED',
+                    },
+                    {
+                        userId: 'mock-2',
+                        name: 'Jane Smith',
+                        email: 'jane@example.com',
+                        permission: 'READ_ONLY',
+                        status: 'ACCEPTED',
+                    },
+                    {
+                        userId: 'mock-3',
+                        name: 'Bob Wilson',
+                        email: 'bob@example.com',
+                        permission: 'EDIT',
+                        status: 'PENDING',
+                    },
+                ];
+                console.log('✅ Mock collaborators loaded:', mockCollaborators);
+                set({ collaborators: mockCollaborators, isLoading: false });
+            } else {
+                // For other errors, just set loading false without blocking UI
+                set({ isLoading: false });
+            }
         }
     },
 
@@ -127,7 +158,7 @@ export const useCollaboratorStore = create<CollaboratorStoreState>((set, get) =>
 
             await API.share.createRequest({
                 noteId: currentNoteId,
-                receiverId: email, // Sending email as ID, expecting backend to handle or update required
+                receiverEmail: email, // Send email as receiverEmail
                 permission: permission
             });
 
@@ -136,7 +167,9 @@ export const useCollaboratorStore = create<CollaboratorStoreState>((set, get) =>
             set({ isLoading: false });
         } catch (error: any) {
             console.error('Error inviting collaborator:', error);
-            set({ error: error.response?.data?.message || 'Failed to invite user', isLoading: false });
+            console.error('Error response:', error.response?.data);
+            const errorMsg = error.response?.data?.message || error.response?.data?.error || 'Failed to invite user';
+            set({ error: errorMsg, isLoading: false });
         }
     },
 

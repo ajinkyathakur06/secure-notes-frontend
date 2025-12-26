@@ -19,37 +19,53 @@ export default function NotesPage() {
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [initialRect, setInitialRect] = useState<DOMRect | null>(null);
 
+  // TEMPORARILY DISABLED FOR UI TESTING - UNCOMMENT BEFORE PRODUCTION
   useEffect(() => {
     if (!isAuthenticated) {
       router.push('/auth/login');
     }
   }, [isAuthenticated, router]);
 
-  // Notes state (initially empty or fetched)
+  // Notes state (will be fetched from backend)
   const [notes, setNotes] = useState<Note[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Fetch notes and requests on mount
   useEffect(() => {
-      if (isAuthenticated) {
-          // Fetch owned notes
-          API.notes.getOwned()
-              .then(res => {
-                  // Map response to Note interface
-                  const mappedNotes = res.data.map((n: any) => ({
-                      id: n.note_id,
-                      title: n.title,
-                      content: n.content || '',
-                      isPinned: false, // Default
-                      createdAt: new Date(n.updatedAt), // Using updatedAt for sorting often
-                      updatedAt: new Date(n.updatedAt),
-                  }));
-                  setNotes(mappedNotes);
-              })
-              .catch(err => console.error("Failed to fetch notes", err));
+    if (isAuthenticated) {
+      setIsLoading(true);
+      // Fetch both owned and shared notes
+      Promise.all([
+        API.notes.getOwned(),
+        API.notes.getShared()
+      ])
+        .then(([ownedRes, sharedRes]) => {
+          const ownedNotes = ownedRes.data.map((n: any) => ({
+            id: n.note_id,
+            title: n.title,
+            content: n.content || '',
+            isPinned: false,
+            createdAt: new Date(n.updatedAt),
+            updatedAt: new Date(n.updatedAt),
+          }));
 
-          // Fetch shared requests
-          useRequestsStore.getState().fetchRequests();
-      }
+          const sharedNotes = sharedRes.data.map((n: any) => ({
+            id: n.note_id,
+            title: n.title,
+            content: n.content || '',
+            isPinned: false,
+            createdAt: new Date(n.updatedAt),
+            updatedAt: new Date(n.updatedAt),
+          }));
+
+          setNotes([...ownedNotes, ...sharedNotes]);
+        })
+        .catch(err => console.error("Failed to fetch notes", err))
+        .finally(() => setIsLoading(false));
+
+      // Fetch shared requests
+      useRequestsStore.getState().fetchRequests();
+    }
   }, [isAuthenticated]);
 
 
@@ -57,7 +73,7 @@ export default function NotesPage() {
     try {
       const res = await API.notes.create({ title: 'Untitled', content: ' ' });
       const newNoteData = res.data;
-      
+
       const newNote: Note = {
         id: newNoteData.note_id,
         title: newNoteData.title,
@@ -106,17 +122,33 @@ export default function NotesPage() {
           {/* Sort Controls */}
           <SortControls />
 
-          {/* Notes Grid */}
-          <NotesGrid
-            notes={notes}
-            onTogglePin={handleTogglePin}
-            onArchive={handleArchive}
-            onUpdateNote={handleUpdateNote}
-            onOpen={(note, rect) => {
+          {/* Loading Skeleton */}
+          {isLoading ? (
+            <div className="w-full mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div
+                  key={i}
+                  className="bg-white rounded-lg border border-gray-200 p-4 h-40 animate-pulse"
+                >
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-3"></div>
+                  <div className="h-3 bg-gray-100 rounded w-full mb-2"></div>
+                  <div className="h-3 bg-gray-100 rounded w-5/6"></div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            /* Notes Grid */
+            <NotesGrid
+              notes={notes}
+              onTogglePin={handleTogglePin}
+              onArchive={handleArchive}
+              onUpdateNote={handleUpdateNote}
+              onOpen={(note, rect) => {
                 setInitialRect(rect ?? null);
                 setSelectedNote(note);
-            }}
-          />
+              }}
+            />
+          )}
         </div>
       </div>
 
@@ -129,8 +161,8 @@ export default function NotesPage() {
           note={selectedNote}
           initialRect={initialRect ?? undefined}
           onClose={() => {
-              setSelectedNote(null);
-              setInitialRect(null);
+            setSelectedNote(null);
+            setInitialRect(null);
           }}
           onTogglePin={handleTogglePin}
           onSave={handleUpdateNote}
