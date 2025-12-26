@@ -108,9 +108,12 @@ export default function RegisterPage() {
     }
   };
 
+  /* New Hook */
+  const signup = useAuthStore((state) => state.signup);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -118,19 +121,10 @@ export default function RegisterPage() {
     setIsSubmitting(true);
 
     try {
-      // TODO: Implement actual registration API call
-      console.log('Registration data:', {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        password: formData.password,
-      });
+      const fullName = `${formData.firstName} ${formData.lastName}`.trim();
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await signup(fullName, formData.email, formData.password);
 
-      alert('Account created successfully! (Demo)');
-      
       // Reset form
       setFormData({
         firstName: '',
@@ -140,9 +134,13 @@ export default function RegisterPage() {
         confirmPassword: '',
         agreeToTerms: false,
       });
-    } catch (error) {
+
+      alert('Account created successfully! Redirecting to login...');
+      router.push('/auth/login');
+
+    } catch (error: any) {
       console.error('Registration error:', error);
-      alert('Registration failed. Please try again.');
+      alert(error.message || 'Registration failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -175,9 +173,8 @@ export default function RegisterPage() {
                   First Name
                 </span>
                 <input
-                  className={`form-input flex w-full rounded-lg border ${
-                    errors.firstName ? 'border-red-500' : 'border-[#dbe0e6]'
-                  } bg-white h-12 px-4 text-base text-[#111418] placeholder-[#617289] focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all`}
+                  className={`form-input flex w-full rounded-lg border ${errors.firstName ? 'border-red-500' : 'border-[#dbe0e6]'
+                    } bg-white h-12 px-4 text-base text-[#111418] placeholder-[#617289] focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all`}
                   placeholder="Jane"
                   type="text"
                   name="firstName"
@@ -193,9 +190,8 @@ export default function RegisterPage() {
                   Last Name
                 </span>
                 <input
-                  className={`form-input flex w-full rounded-lg border ${
-                    errors.lastName ? 'border-red-500' : 'border-[#dbe0e6]'
-                  } bg-white h-12 px-4 text-base text-[#111418] placeholder-[#617289] focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all`}
+                  className={`form-input flex w-full rounded-lg border ${errors.lastName ? 'border-red-500' : 'border-[#dbe0e6]'
+                    } bg-white h-12 px-4 text-base text-[#111418] placeholder-[#617289] focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all`}
                   placeholder="Doe"
                   type="text"
                   name="lastName"
@@ -215,9 +211,8 @@ export default function RegisterPage() {
               </span>
               <div className="relative flex items-center">
                 <input
-                  className={`form-input flex w-full rounded-lg border ${
-                    errors.email ? 'border-red-500' : 'border-[#dbe0e6]'
-                  } bg-white h-12 px-4 text-base text-[#111418] placeholder-[#617289] focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all`}
+                  className={`form-input flex w-full rounded-lg border ${errors.email ? 'border-red-500' : 'border-[#dbe0e6]'
+                    } bg-white h-12 px-4 text-base text-[#111418] placeholder-[#617289] focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-all`}
                   placeholder="jane@example.com"
                   type="email"
                   name="email"
@@ -236,9 +231,8 @@ export default function RegisterPage() {
                 Password
               </span>
               <div
-                className={`relative flex w-full rounded-lg border ${
-                  errors.password ? 'border-red-500' : 'border-[#dbe0e6]'
-                } bg-white focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all`}
+                className={`relative flex w-full rounded-lg border ${errors.password ? 'border-red-500' : 'border-[#dbe0e6]'
+                  } bg-white focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all`}
               >
                 <input
                   className="form-input flex-1 bg-transparent border-none h-12 px-4 text-base text-[#111418] placeholder-[#617289] focus:ring-0 focus:outline-none"
@@ -269,9 +263,8 @@ export default function RegisterPage() {
                 Confirm Password
               </span>
               <div
-                className={`relative flex w-full rounded-lg border ${
-                  errors.confirmPassword ? 'border-red-500' : 'border-[#dbe0e6]'
-                } bg-white focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all`}
+                className={`relative flex w-full rounded-lg border ${errors.confirmPassword ? 'border-red-500' : 'border-[#dbe0e6]'
+                  } bg-white focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all`}
               >
                 <input
                   className="form-input flex-1 bg-transparent border-none h-12 px-4 text-base text-[#111418] placeholder-[#617289] focus:ring-0 focus:outline-none"

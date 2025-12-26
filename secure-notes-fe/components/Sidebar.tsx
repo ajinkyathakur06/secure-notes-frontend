@@ -3,13 +3,18 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useRequestsStore } from '@/store/useRequestsStore';
 import { useRouter, usePathname } from 'next/navigation';
 
 export default function Sidebar() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const logout = useAuthStore((state) => state.logout);
+  const user = useAuthStore((state) => state.user);
+  const requests = useRequestsStore((state) => state.requests);
   const router = useRouter();
   const pathname = usePathname();
+
+  const pendingCount = requests.filter(r => r.status === 'PENDING').length;
 
   const handleLogout = () => {
     logout();
@@ -60,9 +65,11 @@ export default function Sidebar() {
         >
           <span className={`material-symbols-outlined ${pathname === '/requests' ? 'fill-1' : ''}`}>inbox</span>
           <span className="font-medium text-sm">Requests</span>
-          <span className="ml-auto bg-slate-200 text-slate-600 text-xs font-bold px-2 py-0.5 rounded-full">
-            3
-          </span>
+          {pendingCount > 0 && (
+            <span className="ml-auto bg-primary text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+              {pendingCount}
+            </span>
+          )}
         </Link>
         <Link
           className={getLinkClass('/trash')}
@@ -102,8 +109,8 @@ export default function Sidebar() {
             <span className="material-symbols-outlined text-slate-500">account_circle</span>
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-sm font-semibold text-slate-900 truncate">Alex Morgan</span>
-            <span className="text-xs text-slate-500 truncate">alex.m@secure.net</span>
+            <span className="text-sm font-semibold text-slate-900 truncate">{user?.name || 'Loading...'}</span>
+            <span className="text-xs text-slate-500 truncate">{user?.email || ''}</span>
           </div>
           <span className="material-symbols-outlined ml-auto text-slate-400">
             {showProfileMenu ? 'expand_less' : 'expand_more'}

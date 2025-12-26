@@ -1,36 +1,18 @@
 "use client";
 
-import { useState } from 'react';
 import NoteCard, { Note } from './NoteCard';
-import NoteModal from './NoteModal';
 
 interface NotesGridProps {
   notes: Note[];
   onTogglePin: (id: string) => void;
   onArchive: (id: string) => void;
   onUpdateNote: (updated: Note) => void;
+  onOpen: (note: Note, rect?: DOMRect) => void;
 }
 
-export default function NotesGrid({ notes, onTogglePin, onArchive, onUpdateNote }: NotesGridProps) {
-  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
-  const [initialRect, setInitialRect] = useState<DOMRect | null>(null);
-
+export default function NotesGrid({ notes, onTogglePin, onArchive, onUpdateNote, onOpen }: NotesGridProps) {
   const pinnedNotes = notes.filter((note) => note.isPinned);
   const otherNotes = notes.filter((note) => !note.isPinned);
-
-  const handleOpen = (note: Note, rect?: DOMRect) => {
-    setSelectedNote(note);
-    setInitialRect(rect ?? null);
-  };
-
-  const handleClose = () => {
-    setSelectedNote(null);
-    setInitialRect(null);
-  };
-
-  const handleSave = (updated: Note) => {
-    onUpdateNote(updated);
-  };
 
   return (
     <div className="w-full">
@@ -47,7 +29,7 @@ export default function NotesGrid({ notes, onTogglePin, onArchive, onUpdateNote 
                 note={note}
                 onTogglePin={onTogglePin}
                 onArchive={onArchive}
-                onOpen={handleOpen}
+                onOpen={onOpen}
               />
             ))}
           </div>
@@ -67,7 +49,7 @@ export default function NotesGrid({ notes, onTogglePin, onArchive, onUpdateNote 
                 note={note}
                 onTogglePin={onTogglePin}
                 onArchive={onArchive}
-                onOpen={handleOpen}
+                onOpen={onOpen}
               />
             ))}
           </div>
@@ -83,15 +65,6 @@ export default function NotesGrid({ notes, onTogglePin, onArchive, onUpdateNote 
         </div>
       )}
 
-      {selectedNote && (
-        <NoteModal
-          note={selectedNote}
-          initialRect={initialRect ?? undefined}
-          onClose={handleClose}
-          onTogglePin={onTogglePin}
-          onSave={handleSave}
-        />
-      )}
     </div>
   );
 }
