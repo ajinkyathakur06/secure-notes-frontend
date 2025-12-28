@@ -1,8 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import { useSearchStore } from '@/store/useSearchStore';
 
 export default function NotesHeader() {
+  const { searchQuery, setSearchQuery } = useSearchStore();
+
   return (
     <header className="flex items-center justify-between px-4 py-4 md:px-8 md:py-6 bg-background-light z-10">
       <div className="md:hidden mr-3">
@@ -20,6 +23,8 @@ export default function NotesHeader() {
             className="w-full h-full bg-transparent border-none text-slate-900 placeholder:text-slate-500 focus:ring-0 pl-12 pr-4 rounded-lg text-base"
             placeholder="Search your secure notes..."
             type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
           <div className="absolute right-2 flex items-center gap-1">
             <button className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors">

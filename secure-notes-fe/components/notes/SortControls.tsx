@@ -1,10 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useSearchStore } from '@/store/useSearchStore';
 
 export default function SortControls() {
-  const [sortBy, setSortBy] = useState('modified');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const { sortBy, sortOrder, setSortBy, setSortOrder } = useSearchStore();
 
   return (
     <div className="w-full flex justify-end items-center mb-6 px-1">
@@ -16,7 +15,7 @@ export default function SortControls() {
           <select
             className="appearance-none bg-surface-light border border-slate-200 text-slate-700 text-sm font-medium rounded-lg py-2 pl-3 pr-9 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-sm hover:border-slate-300 transition-colors cursor-pointer w-40"
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
+            onChange={(e) => setSortBy(e.target.value as any)}
           >
             <option value="created">Date Created</option>
             <option value="modified">Last Modified</option>

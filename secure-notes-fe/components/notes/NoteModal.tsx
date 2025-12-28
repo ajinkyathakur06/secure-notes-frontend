@@ -3,6 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Note } from "./NoteCard";
 import { API } from "@/services/API";
+import { useCollaboratorStore } from "@/store/useCollaboratorStore";
+import { useSocket } from "@/contexts/SocketContext";
+import mammoth from 'mammoth';
 
 interface NoteModalProps {
   note: Note;
@@ -10,9 +13,13 @@ interface NoteModalProps {
   onClose: () => void;
   onTogglePin: (id: string) => void;
   onSave: (updated: Note) => void;
+  onDelete: (note: Note) => void;
 }
 
-export default function NoteModal({ note, initialRect, onClose, onTogglePin, onSave }: NoteModalProps) {
+export default function NoteModal({ note, initialRect, onClose, onTogglePin, onSave, onDelete }: NoteModalProps) {
+  // Determine if user has edit permission (owner or EDIT permission)
+  const canEdit = note.isOwned || note.permission === 'EDIT';
+  
   const [title, setTitle] = useState(note.title);
   const [content, setContent] = useState(note.content);
   const [mounted, setMounted] = useState(false);
@@ -20,39 +27,145 @@ export default function NoteModal({ note, initialRect, onClose, onTogglePin, onS
   const panelRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  
+  const { socket, isConnected } = useSocket();
+  const isRemoteUpdate = useRef(false);
 
-  // Auto-save logic
+  // Join room and listen for updates
   useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    socket.emit('join-note', { noteId: note.id });
+    console.log('Joined note room:', note.id);
+
+    const onNoteUpdated = (data: { title: string; content: string; updatedBy: string }) => {
+        console.log('Remote update received');
+        isRemoteUpdate.current = true;
+        setTitle(data.title);
+        setContent(data.content);
+        // We can also trigger onSave used by parent to update list without API call
+        // onSave({ ...note, title: data.title, content: data.content, updatedAt: new Date() });
+    };
+
+    socket.on('note-updated', onNoteUpdated);
+
+    return () => {
+        socket.emit('leave-note', { noteId: note.id });
+        socket.off('note-updated', onNoteUpdated);
+    };
+  }, [socket, isConnected, note.id]);
+
+  // Sync changes (Socket emit + Fallback)
+  useEffect(() => {
+    // Skip if this change came from remote
+    if (isRemoteUpdate.current) {
+        isRemoteUpdate.current = false;
+        return;
+    }
+
     const timer = setTimeout(() => {
-        // Only save if changes detected and title/content are not strictly equal to initial prop (though local state is what matters for "latest")
-        // We can just save whatever is current state after delay
-        if (title !== note.title || content !== note.content) {
-            console.log("Auto-saving...");
-            const updatedNote = { ...note, title, content, updatedAt: new Date() };
-            
-            // Call API
-            API.notes.update(note.id, { title, content })
+        if (title === note.title && content === note.content) return;
+
+        // If socket connected and we can edit, emit update
+        if (socket && isConnected && canEdit) { // check canEdit to be safe
+            socket.emit('note-update', { noteId: note.id, title, content });
+            onSave({ ...note, title, content, updatedAt: new Date() }); // Optimistic update parent
+        } else {
+            // Fallback to API if socket not connected
+             console.log("Socket disconnected, saving via API...");
+             API.notes.update(note.id, { title, content })
                 .then(() => {
-                    console.log("Auto-save successful");
-                    onSave(updatedNote); // Update parent state
+                    onSave({ ...note, title, content, updatedAt: new Date() });
                 })
                 .catch(err => console.error("Auto-save failed", err));
         }
-    }, 2000);
+    }, 500); // 500ms debounce
 
     return () => clearTimeout(timer);
-  }, [title, content, note, onSave]);
+  }, [title, content, note, onSave, socket, isConnected, canEdit]);
 
-  // attachments (file upload)
-  const [attachments, setAttachments] = useState<File[]>([]);
+  const openPanel = useCollaboratorStore(state => state.openPanel);
 
-  // collaborators
-  const [collaborators, setCollaborators] = useState<string[]>([]);
-  const [showCollaborator, setShowCollaborator] = useState(false);
-  const [collabInput, setCollabInput] = useState('');
+  // Configure PDF.js worker (only on client side)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      import('pdfjs-dist').then((pdfjsLib) => {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+      });
+    }
+  }, []);
 
-  // format menu
-  const [showFormatMenu, setShowFormatMenu] = useState(false);
+  // Helper: Extract text from file
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      let extractedText = '';
+
+      if (file.type === 'application/pdf') {
+        // Extract from PDF - use dynamic import
+        const pdfjsLib = await import('pdfjs-dist');
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const numPages = pdf.numPages;
+        
+        for (let i = 1; i <= numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map((item: any) => item.str).join(' ');
+          extractedText += pageText + '\n';
+        }
+      } else if (file.type === 'text/plain') {
+        // Extract from TXT
+        extractedText = await file.text();
+      } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || 
+                 file.name.endsWith('.docx')) {
+        // Extract from DOCX
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        extractedText = result.value;
+      } else if (file.name.endsWith('.doc')) {
+        alert('Legacy .doc files are not supported. Please convert to .docx or use .txt/.pdf');
+        return;
+      } else {
+        alert('Unsupported file type. Please use PDF, TXT, or DOCX files.');
+        return;
+      }
+
+      // Append extracted text to content
+      setContent(prev => prev + '\n\n' + extractedText);
+      alert('Text extracted successfully!');
+    } catch (error) {
+      console.error('Error extracting text:', error);
+      alert('Failed to extract text from file');
+    }
+
+    // Reset file input
+    e.target.value = '';
+  };
+
+  // Helper: Download as TXT
+  const handleDownloadTxt = () => {
+    const txtContent = `${title}\n\n${content}`;
+    const blob = new Blob([txtContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title || 'note'}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // Helper: Delete note
+  const handleDelete = () => {
+    if (confirm('Are you sure you want to delete this note?')) {
+      onDelete(note);
+      handleClose();
+    }
+  };
 
   // inline style for the panel to animate from card rect
   const [panelStyle, setPanelStyle] = useState<React.CSSProperties | undefined>(() => {
@@ -107,40 +220,6 @@ export default function NoteModal({ note, initialRect, onClose, onTogglePin, onS
         });
   };
 
-  // Formatting helpers: wrap selected text in textarea
-  const wrapSelection = (before: string, after?: string) => {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    const start = ta.selectionStart;
-    const end = ta.selectionEnd;
-    const sel = content.slice(start, end);
-    const wrapAfter = after ?? before;
-    const newContent = content.slice(0, start) + before + sel + wrapAfter + content.slice(end);
-    setContent(newContent);
-    // restore selection
-    requestAnimationFrame(() => {
-      ta.focus();
-      ta.selectionStart = start + before.length;
-      ta.selectionEnd = start + before.length + sel.length;
-    });
-  };
-
-  const handleFormat = (type: 'bold' | 'italic' | 'code') => {
-    setShowFormatMenu(false);
-    if (type === 'bold') wrapSelection('**');
-    if (type === 'italic') wrapSelection('*');
-    if (type === 'code') wrapSelection('`');
-  };
-
-  // Collaborators
-  const addCollaborator = () => {
-    const val = collabInput.trim();
-    if (!val) return;
-    setCollaborators((prev) => [...prev, val]);
-    setCollabInput('');
-  };
-  const removeCollaborator = (idx: number) => setCollaborators((prev) => prev.filter((_, i) => i !== idx));
-
   const handleClose = () => {
     if (initialRect && panelRef.current) {
       // animate back to the initial rect then close
@@ -180,9 +259,11 @@ export default function NoteModal({ note, initialRect, onClose, onTogglePin, onS
         <header className="p-6 flex items-start">
           <input
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => canEdit && setTitle(e.target.value)}
             className="flex-1 bg-transparent text-2xl font-bold outline-none"
             placeholder="Title"
+            disabled={!canEdit}
+            style={{ cursor: canEdit ? 'text' : 'default' }}
           />
           <button
             onClick={(e) => {
@@ -198,104 +279,76 @@ export default function NoteModal({ note, initialRect, onClose, onTogglePin, onS
 
         <div className="px-6 pb-6 flex-1 overflow-auto">
           <div className="mb-3">
-            {attachments.length > 0 && (
-              <div className="flex gap-2 flex-wrap mb-2">
-                {attachments.map((f, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-white/60 border border-slate-200 rounded px-2 py-1 text-sm">
-                    <span className="text-slate-700 max-w-[180px] truncate">{f.name}</span>
-                    <button onClick={() => setAttachments((prev) => prev.filter((_, idx) => idx !== i))} className="text-slate-400 hover:text-slate-600">×</button>
-                  </div>
-                ))}
-              </div>
-            )}
-
             <textarea
               ref={textareaRef}
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={(e) => canEdit && setContent(e.target.value)}
               className="w-full h-full min-h-[300px] resize-none bg-transparent text-slate-700 text-base outline-none"
-              placeholder="Take a note..."
+              placeholder={canEdit ? "Take a note..." : "Read-only note"}
+              disabled={!canEdit}
+              style={{ cursor: canEdit ? 'text' : 'default' }}
             />
           </div>
         </div>
 
         <footer className="p-4 border-t border-slate-200 flex items-center gap-3">
-          <div className="relative flex items-center gap-2 text-slate-500">
-            <div className="relative">
-              <button
-                onClick={() => setShowFormatMenu((s) => !s)}
-                className="p-2 rounded hover:bg-slate-100"
-                title="Format"
-              >
-                <span className="material-symbols-outlined">format_align_left</span>
-              </button>
-              {showFormatMenu && (
-                <div className="absolute left-0 mt-2 w-40 bg-white border rounded shadow p-2 z-30">
-                  <button onClick={() => handleFormat('bold')} className="w-full text-left px-2 py-1 hover:bg-slate-50">Bold</button>
-                  <button onClick={() => handleFormat('italic')} className="w-full text-left px-2 py-1 hover:bg-slate-50">Italic</button>
-                  <button onClick={() => handleFormat('code')} className="w-full text-left px-2 py-1 hover:bg-slate-50">Inline code</button>
-                </div>
-              )}
-            </div>
-
-            {/* Color and lock buttons removed per request */}
-
-            <div className="relative">
-              <button
-                onClick={() => setShowCollaborator((s) => !s)}
-                className="p-2 rounded hover:bg-slate-100"
-                title="Add collaborators"
-              >
-                <span className="material-symbols-outlined">person_add</span>
-              </button>
-              {showCollaborator && (
-                <div className="absolute left-0 mt-2 w-64 bg-white border rounded shadow p-3 z-30">
-                  <div className="flex gap-2 mb-2">
-                    <input
-                      value={collabInput}
-                      onChange={(e) => setCollabInput(e.target.value)}
-                      placeholder="email@example.com"
-                      className="flex-1 border rounded px-2 py-1 text-sm"
-                    />
-                    <button onClick={addCollaborator} className="px-3 bg-primary text-white rounded">Add</button>
-                  </div>
-                  <div className="flex flex-col gap-1 max-h-40 overflow-auto">
-                    {collaborators.map((c, i) => (
-                      <div key={i} className="flex items-center justify-between text-sm text-slate-700 border-b pb-1">
-                        <span>{c}</span>
-                        <button onClick={() => removeCollaborator(i)} className="text-slate-400">Remove</button>
-                      </div>
-                    ))}
-                    {collaborators.length === 0 && <div className="text-sm text-slate-400">No collaborators</div>}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <input ref={fileInputRef} type="file" multiple className="hidden" onChange={(e) => {
-              const files = e.target.files;
-              if (!files) return;
-              setAttachments((prev) => [...prev, ...Array.from(files)]);
-              e.currentTarget.value = '';
-            }} />
-            <button onClick={() => fileInputRef.current?.click()} className="p-2 rounded hover:bg-slate-100" title="Attach file">
-              <span className="material-symbols-outlined">attach_file</span>
-            </button>
+          <div className="flex items-center gap-2 text-slate-500">
+            {/* Add Collaborators - All users can view, only owners can add */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                API.notes.download(note.id);
+                openPanel(note.id);
               }}
+              className="p-2 rounded hover:bg-slate-100"
+              title="View collaborators"
+            >
+              <span className="material-symbols-outlined">person_add</span>
+            </button>
+
+            {/* Extract Text from File - Edit permission required */}
+            {canEdit && (
+              <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.txt,.docx"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-2 rounded hover:bg-slate-100"
+                  title="Extract text from file (PDF, TXT, DOCX)"
+                >
+                  <span className="material-symbols-outlined">upload_file</span>
+                </button>
+              </>
+            )}
+
+            {/* Download as TXT - Available to all */}
+            <button
+              onClick={handleDownloadTxt}
               className="p-2 rounded hover:bg-slate-100"
               title="Download as .txt"
             >
               <span className="material-symbols-outlined">download</span>
             </button>
+
+            {/* Delete - Owner only */}
+            {note.isOwned && (
+              <button
+                onClick={handleDelete}
+                className="p-2 rounded hover:bg-slate-100 text-red-500 hover:text-red-700"
+                title="Delete note"
+              >
+                <span className="material-symbols-outlined">delete</span>
+              </button>
+            )}
           </div>
 
           <div className="ml-auto flex items-center gap-4 text-sm text-slate-500">
             <span>Edited {note.updatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-            <button onClick={handleSave} className="text-primary font-semibold">Save</button>
+            {canEdit && <button onClick={handleSave} className="text-primary font-semibold">Save</button>}
             <button onClick={handleClose} className="text-slate-600">Close</button>
           </div>
         </footer>

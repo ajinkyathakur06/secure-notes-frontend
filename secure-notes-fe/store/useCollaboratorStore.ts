@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { API } from '@/services/API';
+import { useAuthStore } from './useAuthStore';
 
 export interface Collaborator {
     userId: string;
@@ -17,6 +18,7 @@ interface CollaboratorStoreState {
     collaborators: Collaborator[];
     isLoading: boolean;
     error: string | null;
+    isCurrentUserOwner: boolean; // Track if current user owns the note
 
     openPanel: (noteId: string) => void;
     closePanel: () => void;
@@ -33,6 +35,7 @@ export const useCollaboratorStore = create<CollaboratorStoreState>((set, get) =>
     collaborators: [],
     isLoading: false,
     error: null,
+    isCurrentUserOwner: false,
 
     openPanel: (noteId) => {
         set({ isOpen: true, currentNoteId: noteId, error: null });
@@ -48,6 +51,10 @@ export const useCollaboratorStore = create<CollaboratorStoreState>((set, get) =>
         try {
             const response = await API.notes.getOne(noteId);
             const note = response.data;
+
+            // Determine if current user is the owner
+            const currentUserId = useAuthStore.getState().user?.user_id;
+            const isCurrentUserOwner = note.user_id === currentUserId;
 
             // Extract collaborators from the note object.
             // Note: `requests` is optional in the interface.
@@ -74,7 +81,7 @@ export const useCollaboratorStore = create<CollaboratorStoreState>((set, get) =>
             // Also potentially add the owner explicitly if needed, but usually we just show who it's shared TO.
             // If I am the owner, I see others. 
 
-            set({ collaborators, isLoading: false });
+            set({ collaborators, isLoading: false, isCurrentUserOwner });
         } catch (error: any) {
             console.error('Error fetching collaborators:', error);
             // For now, fail silently or show empty list if field missing, regular error if network fail
