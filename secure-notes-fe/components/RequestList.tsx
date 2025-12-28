@@ -1,4 +1,4 @@
-import { Request } from '@/store/useRequestsStore';
+import { SharedNoteRequest as Request } from '@/services/API';
 import { RequestCard } from './RequestCard';
 
 interface RequestListProps {

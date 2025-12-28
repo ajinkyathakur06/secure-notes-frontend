@@ -6,7 +6,7 @@ export interface Collaborator {
     name: string;
     email: string;
     permission: 'READ_ONLY' | 'EDIT';
-    status?: 'PENDING' | 'ACCEPTED'; // Optional if we show pending
+    status?: 'PENDING' | 'ACCEPTED' | 'REJECTED'; // Optional if we show pending
     avatarUrl?: string; // Optional if we have avatars
     isOwner?: boolean;
 }
@@ -48,30 +48,25 @@ export const useCollaboratorStore = create<CollaboratorStoreState>((set, get) =>
             const response = await API.notes.getOne(noteId);
             const note = response.data;
 
-            // Attempt to extract collaborators from the note object.
-            // We expect 'requests' or 'collaborators' array in the response based on typical patterns since API doc didn't specify exact field.
-            // We process accepted requests as collaborators.
-            // Since the API doc example didn't strictly show this, we assume it's added or we adapt.
-
+            // Extract collaborators from the note object.
+            // Note: `requests` is optional in the interface.
             const collaborators: Collaborator[] = [];
 
-            // MOCK/ADAPTATION: If the backend returns 'requests' array (likely based on schema)
-            // The schema has: notes -> requests
             if (note.requests && Array.isArray(note.requests)) {
-                note.requests.forEach((req: any) => {
-                    // We can show Accepted and Pending users
+                note.requests.forEach((req) => {
+                    // We can show Accepted, Pending, and Rejected users
                     if (req.receiver) {
                         collaborators.push({
                             userId: req.receiver.user_id,
                             name: req.receiver.name || req.receiver.email?.split('@')[0] || 'User',
                             email: req.receiver.email,
                             permission: req.permission,
-                            status: req.status, // PENDING or ACCEPTED
+                            status: req.status,
                         });
                     }
                 });
             } else if (note.sharedWith && Array.isArray(note.sharedWith)) {
-                // Alternative field name
+                // Fallback/Alternative field name
                 collaborators.push(...note.sharedWith);
             }
 
@@ -92,42 +87,9 @@ export const useCollaboratorStore = create<CollaboratorStoreState>((set, get) =>
 
         set({ isLoading: true, error: null });
         try {
-            // First we need to find the user ID for this email?
-            // The 'createRequest' API requires 'receiverId'.
-            // Usually there is a 'user search' or the backend handles email-to-id lookup.
-            // "1) Create Share Request ... Body: receiverId: ..."
-            // IF the API requires receiverId, and we only have email, we have a problem.
-            // BUT "Allow typing email to invite" is the requirement.
-            // Implementation detail: Standard flows either have a /users/search endpoint OR the invite endpoint accepts email.
-            // API.share.createRequest takes ShareRequestDto { receiverId: string ... }
-
-            // CHECK: Does API support email? The Prompt says: "Body: receiverId".
-            // AND "Allow typing email to invite".
-            // Use case: Google Keep allows typing email. 
-            // I probably need to lookup user by email first.
-            // Is there a "search user by email" endpoint?
-            // API.users only has getProfile and updateProfile.
-
-            // CRITICAL BLOCKER: How to get receiverId from email?
-            // OPTION 1: Assume backend accepts email in `receiverId` field (some backends do loose typing).
-            // OPTION 2: Mock it / Ask user (but I can't ask).
-            // OPTION 3: Check if there's a file I missed with user search.
-
-            // Looking at `api.post('/share', data)`, it sends `receiverId`.
-            // I will assume for this task that I might need to send `email` instead of `receiverId` and the backend handles it, OR there is a way to look it up.
-            // OR, looking at the schema, `User` has `email`.
-            // Since I can't modify backend, and must use existing API:
-            // If 'receiverId' is strictly UUID, I can't guess it.
-
-            // Wait, "Integrate with Share APIs". "Allow typing email to invite".
-            // If the defined API strictly needs ID, the frontend engineer would usually complain.
-            // But I must "Build FRONTEND ONLY".
-            // I will Try to send the EMAIL in the `receiverId` field. If the backend is smart, it might work.
-            // If not, I'll add a comment that "User Lookup API is missing, sending email as ID".
-
             await API.share.createRequest({
                 noteId: currentNoteId,
-                receiverId: email, // Sending email as ID, expecting backend to handle or update required
+                receiverId: email,
                 permission: permission
             });
 

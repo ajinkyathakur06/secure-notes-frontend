@@ -28,28 +28,43 @@ export default function NotesPage() {
   // Notes state (initially empty or fetched)
   const [notes, setNotes] = useState<Note[]>([]);
 
-  // Fetch notes and requests on mount
-  useEffect(() => {
-      if (isAuthenticated) {
-          // Fetch owned notes
-          API.notes.getOwned()
-              .then(res => {
-                  // Map response to Note interface
-                  const mappedNotes = res.data.map((n: any) => ({
-                      id: n.note_id,
-                      title: n.title,
-                      content: n.content || '',
-                      isPinned: false, // Default
-                      createdAt: new Date(n.updatedAt), // Using updatedAt for sorting often
-                      updatedAt: new Date(n.updatedAt),
-                  }));
-                  setNotes(mappedNotes);
-              })
-              .catch(err => console.error("Failed to fetch notes", err));
+  // Fetch notes function
+  const fetchNotes = () => {
+      if (!isAuthenticated) return;
+      
+      API.notes.getAll()
+          .then(res => {
+              const ownedNotes = res.data.owned.map((n: any) => ({
+                  id: n.note_id,
+                  title: n.title,
+                  content: n.content || '',
+                  isPinned: false, // Default
+                  createdAt: new Date(n.updatedAt),
+                  updatedAt: new Date(n.updatedAt),
+                  isOwned: true,
+              }));
 
-          // Fetch shared requests
-          useRequestsStore.getState().fetchRequests();
-      }
+              const otherNotes = res.data.other.map((n: any) => ({
+                  id: n.note_id,
+                  title: n.title,
+                  content: n.content || '',
+                  isPinned: false, // Default
+                  createdAt: new Date(n.updatedAt),
+                  updatedAt: new Date(n.updatedAt),
+                  isOwned: false,
+              }));
+              
+              setNotes([...ownedNotes, ...otherNotes]);
+          })
+          .catch(err => console.error("Failed to fetch notes", err));
+          
+       // Also fetch requests
+       useRequestsStore.getState().fetchRequests();
+  };
+
+  // Initial fetch
+  useEffect(() => {
+      fetchNotes();
   }, [isAuthenticated]);
 
 
@@ -63,8 +78,9 @@ export default function NotesPage() {
         title: newNoteData.title,
         content: newNoteData.content,
         isPinned: false,
-        createdAt: new Date(newNoteData.createdAt),
+        createdAt: new Date(newNoteData.createdAt || new Date()),
         updatedAt: new Date(newNoteData.updatedAt),
+        isOwned: true,
       };
 
       setNotes(prev => [newNote, ...prev]);
@@ -112,6 +128,7 @@ export default function NotesPage() {
             onTogglePin={handleTogglePin}
             onArchive={handleArchive}
             onUpdateNote={handleUpdateNote}
+            onRefresh={fetchNotes}
             onOpen={(note, rect) => {
                 setInitialRect(rect ?? null);
                 setSelectedNote(note);
