@@ -21,7 +21,7 @@ export const useRequestsStore = create<RequestsState>((set, get) => ({
   fetchRequests: async () => {
     set({ isLoading: true, error: null });
     try {
-      const response = await API.share.getPendingRequests();
+      const response = await API.share.getRequests();
       set({ requests: response.data, isLoading: false });
     } catch (error: any) {
       console.error('Error fetching requests:', error);

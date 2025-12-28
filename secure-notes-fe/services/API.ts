@@ -54,7 +54,7 @@ export interface UpdateProfileDto {
 
 export interface ShareRequestDto {
     noteId: string;
-    receiverId: string;
+    receiverEmail: string;
     permission: 'READ_ONLY' | 'EDIT';
 }
 
@@ -165,7 +165,7 @@ export const API = {
     },
     share: {
         createRequest: (data: ShareRequestDto) => api.post<void>('/share', data),
-        getPendingRequests: () => api.get<SharedNoteRequest[]>('/share/requests'),
+        getRequests: () => api.get<SharedNoteRequest[]>('/share/requests'),
         respondToRequest: (data: RespondShareDto) => api.post<void>('/share/respond', data),
         updatePermission: (data: UpdatePermissionDto) => api.patch<void>('/share/permission', data),
         revokeAccess: (noteId: string, userId: string) => api.delete<void>(`/share/revoke/${noteId}/${userId}`),
