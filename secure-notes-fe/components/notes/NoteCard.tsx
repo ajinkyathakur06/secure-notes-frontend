@@ -10,7 +10,8 @@ export interface Note {
   isPinned: boolean;
   createdAt: Date;
   updatedAt: Date;
-  isOwned?: boolean; // Added isOwned field
+  isOwned?: boolean;
+  permission?: 'READ_ONLY' | 'EDIT'; // User's permission level for this note
 }
 
 interface NoteCardProps {

@@ -5,7 +5,7 @@ import { InviteCollaboratorForm } from './InviteCollaboratorForm';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export const CollaboratorPanel = () => {
-    const { isOpen, closePanel, isLoading, error } = useCollaboratorStore();
+    const { isOpen, closePanel, isLoading, error, isCurrentUserOwner } = useCollaboratorStore();
     const user = useAuthStore(state => state.user);
     const [mount, setMount] = useState(false);
 
@@ -59,7 +59,7 @@ export const CollaboratorPanel = () => {
                     )}
 
                     <CollaboratorList />
-                    <InviteCollaboratorForm />
+                    {isCurrentUserOwner && <InviteCollaboratorForm />}
                 </div>
 
                 {/* Footer Actions */}

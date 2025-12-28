@@ -151,6 +151,11 @@ export default function NotesPage() {
           }}
           onTogglePin={handleTogglePin}
           onSave={handleUpdateNote}
+          onDelete={(note) => {
+            // Remove from local state
+            setNotes(prev => prev.filter(n => n.id !== note.id));
+            setSelectedNote(null);
+          }}
         />
       )}
     </main>
