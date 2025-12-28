@@ -69,7 +69,7 @@ export default function RequestsPage() {
   };
 
   return (
-    <main className="min-h-[calc(100vh-80px)] bg-[#f7f7f6] mx-auto flex flex-col h-screen overflow-hidden">
+    <main className="min-h-[calc(100vh-80px)] w-full bg-[#f7f7f6] mx-auto flex flex-col h-screen overflow-hidden">
       <NotesHeader />
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pb-6 pt-2 flex flex-col">
       <div className="mb-4 flex items-center justify-between">

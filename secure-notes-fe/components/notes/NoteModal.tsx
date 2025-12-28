@@ -281,6 +281,16 @@ export default function NoteModal({ note, initialRect, onClose, onTogglePin, onS
             <button onClick={() => fileInputRef.current?.click()} className="p-2 rounded hover:bg-slate-100" title="Attach file">
               <span className="material-symbols-outlined">attach_file</span>
             </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                API.notes.download(note.id);
+              }}
+              className="p-2 rounded hover:bg-slate-100"
+              title="Download as .txt"
+            >
+              <span className="material-symbols-outlined">download</span>
+            </button>
           </div>
 
           <div className="ml-auto flex items-center gap-4 text-sm text-slate-500">

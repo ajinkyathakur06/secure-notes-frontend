@@ -7,10 +7,15 @@ import ConfirmationModal from '@/components/ConfirmationModal';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
 
+import { API } from '@/services/API';
+
+// ...
+
 export default function ProfilePage() {
   const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
   const user = useAuthStore((state) => state.user);
+  const updateUser = useAuthStore((state) => state.updateUser);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -36,11 +41,17 @@ export default function ProfilePage() {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      alert('Profile updated successfully!');
-    }, 1000);
+    try {
+        const res = await API.users.updateProfile({ name: formData.name });
+        // Update local store
+        updateUser(res.data);
+        alert('Profile updated successfully!');
+    } catch (error) {
+        console.error("Failed to update profile", error);
+        alert("Failed to update profile");
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   const handleDeleteAccount = () => {
@@ -85,14 +96,18 @@ export default function ProfilePage() {
                 <input
                   id="email"
                   type="email"
+                  disabled
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-500 bg-slate-50 cursor-not-allowed outline-none transition-all"
                   placeholder="you@example.com"
                 />
+                <p className="text-xs text-slate-400">Email updates are not currently supported.</p>
               </div>
 
-              <div className="border-t border-slate-100 pt-6 mt-2">
+              <div className="border-t border-slate-100 pt-6 mt-2 opacity-50 pointer-events-none relative">
+                <div className="absolute inset-0 z-10 flex items-center justify-center">
+                    {/* <span className="bg-white px-2 text-xs font-semibold text-slate-400">Coming Soon</span> */}
+                </div>
                 <h3 className="text-sm font-semibold text-slate-900 mb-4">Change Password</h3>
                 <div className="grid gap-4">
                   <div className="grid gap-2">
@@ -100,6 +115,7 @@ export default function ProfilePage() {
                     <input
                       id="currentPassword"
                       type="password"
+                      disabled
                       value={formData.currentPassword}
                       onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
@@ -110,12 +126,14 @@ export default function ProfilePage() {
                     <input
                       id="newPassword"
                       type="password"
+                      disabled
                       value={formData.newPassword}
                       onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
                       className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                     />
                   </div>
                 </div>
+                 <p className="text-xs text-slate-400 mt-2">Password updates coming soon.</p>
               </div>
 
               <div className="flex justify-end pt-4">
@@ -128,6 +146,7 @@ export default function ProfilePage() {
                 </button>
               </div>
             </form>
+
           </div>
 
           {/* Danger Zone */}

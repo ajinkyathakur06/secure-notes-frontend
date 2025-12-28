@@ -1,12 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import axios from 'axios';
+import { API } from '@/services/API';
 
 interface User {
     user_id: string;
     name: string;
     email: string;
-    createdAt: string;
+    createdAt?: string; // Made optional to match API response
 }
 
 interface AuthState {
@@ -16,32 +16,25 @@ interface AuthState {
     login: (email: string, password: string) => Promise<void>;
     signup: (name: string, email: string, password: string) => Promise<void>;
     logout: () => void;
+    updateUser: (user: User) => void;
 }
-
-// You can change this to your actual backend URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL;
 
 export const useAuthStore = create<AuthState>()(
     persist(
-        (set) => ({
+        (set, get) => ({
             token: null,
             user: null,
             isAuthenticated: false,
             login: async (email, password) => {
                 try {
-                    const response = await axios.post(`${API_BASE_URL}/auth/login`, {
-                        email,
-                        password,
-                    });
-
+                    const response = await API.auth.login({ email, password });
                     const token = response.data.access_token;
 
-                    // Fetch user profile immediately
-                    const profileResponse = await axios.get(`${API_BASE_URL}/users/me`, {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    });
+                    // Set token first so the API interceptor can pick it up
+                    set({ token });
+
+                    // Fetch user profile
+                    const profileResponse = await API.users.getProfile();
 
                     set({
                         token,
@@ -50,6 +43,9 @@ export const useAuthStore = create<AuthState>()(
                     });
                 } catch (error: any) {
                     console.error("Login error:", error);
+                    // Reset token if profile fetch fails
+                    set({ token: null });
+
                     // Extract error message from axios response if available
                     const errorMessage = error.response?.data?.message || error.message || 'Login failed';
                     throw new Error(errorMessage);
@@ -57,11 +53,7 @@ export const useAuthStore = create<AuthState>()(
             },
             signup: async (name, email, password) => {
                 try {
-                    await axios.post(`${API_BASE_URL}/auth/signup`, {
-                        name,
-                        email,
-                        password,
-                    });
+                    await API.auth.signup({ name, email, password });
                     // Signup successful, no token returned, so we don't set auth state
                     // User needs to login separately
                 } catch (error: any) {
@@ -72,6 +64,9 @@ export const useAuthStore = create<AuthState>()(
             },
             logout: () => {
                 set({ token: null, user: null, isAuthenticated: false });
+            },
+            updateUser: (user: User) => {
+                set({ user });
             },
         }),
         {

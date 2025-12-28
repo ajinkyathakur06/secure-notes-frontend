@@ -1,51 +1,58 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import NotesHeader from '@/components/NotesHeader';
 import MobileNav from '@/components/MobileNav';
 import { Note } from '@/components/notes/NoteCard';
 import TrashNoteCard from '@/components/notes/TrashNoteCard';
+import { API } from '@/services/API';
 
 export default function TrashPage() {
-  // Demo trash data
-  const [trashNotes, setTrashNotes] = useState<Note[]>([
-    {
-      id: '101',
-      title: 'Old Grocery List',
-      content: 'Apples, Bananas, Milk, Cereal. Need to buy these before the weekend.',
-      isPinned: false,
-      createdAt: new Date('2024-09-10'),
-      updatedAt: new Date('2024-09-12'),
-    },
-    {
-      id: '102',
-      title: 'Scrapped Project Idea',
-      content: 'An app that tracks water intake. Market research showed too many competitors.',
-      isPinned: false,
-      createdAt: new Date('2024-08-05'),
-      updatedAt: new Date('2024-08-10'),
-    },
-    {
-      id: '103',
-      title: 'Meeting Notes - Aug',
-      content: 'Topics: Q3 goals, hiring plan, office renovation. Action items completed.',
-      isPinned: false,
-      createdAt: new Date('2024-08-15'),
-      updatedAt: new Date('2024-08-15'),
-    },
-  ]);
+  const [trashNotes, setTrashNotes] = useState<Note[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleRestore = (id: string) => {
-    // TODO: Implement restore functionality
-    console.log('Restore note:', id);
-    setTrashNotes((prev) => prev.filter((n) => n.id !== id));
+  useEffect(() => {
+    fetchTrash();
+  }, []);
+
+  const fetchTrash = async () => {
+    setIsLoading(true);
+    try {
+      const res = await API.notes.getTrash();
+      // Map response to Note interface. Note that getTrash returns { note: { ... }, deletedAt: ... }
+      const mapped = res.data.map((item: any) => ({
+        id: item.note.note_id,
+        title: item.note.title,
+        content: item.note.content || '',
+        isPinned: false,
+        createdAt: new Date(item.note.updatedAt),
+        updatedAt: new Date(item.note.updatedAt),
+      }));
+      setTrashNotes(mapped);
+    } catch (err) {
+      console.error("Failed to fetch trash", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDeleteForever = (id: string) => {
-    // TODO: Implement permanent delete functionality
-    if (confirm('Delete this note forever? This cannot be undone.')) {
-      console.log('Delete forever:', id);
+  const handleRestore = async (id: string) => {
+    try {
+      await API.notes.restore(id);
       setTrashNotes((prev) => prev.filter((n) => n.id !== id));
+    } catch (err) {
+      console.error("Failed to restore note", err);
+    }
+  };
+
+  const handleDeleteForever = async (id: string) => {
+    if (confirm('Delete this note forever? This cannot be undone.')) {
+      try {
+        await API.notes.delete(id, 'all');
+        setTrashNotes((prev) => prev.filter((n) => n.id !== id));
+      } catch (err) {
+        console.error("Failed to delete note forever", err);
+      }
     }
   };
 
@@ -77,7 +84,11 @@ export default function TrashPage() {
           </div>
 
           {!trashNotes.length ? (
-            emptyState
+            isLoading ? (
+              <div className="flex justify-center py-24">
+                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : emptyState
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {trashNotes.map((note) => (
