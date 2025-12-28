@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { Note } from "./NoteCard";
 import { API } from "@/services/API";
 import { useCollaboratorStore } from "@/store/useCollaboratorStore";
-import * as pdfjsLib from 'pdfjs-dist';
 import mammoth from 'mammoth';
 
 interface NoteModalProps {
@@ -52,9 +51,13 @@ export default function NoteModal({ note, initialRect, onClose, onTogglePin, onS
 
   const openPanel = useCollaboratorStore(state => state.openPanel);
 
-  // Configure PDF.js worker
+  // Configure PDF.js worker (only on client side)
   useEffect(() => {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+    if (typeof window !== 'undefined') {
+      import('pdfjs-dist').then((pdfjsLib) => {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+      });
+    }
   }, []);
 
   // Helper: Extract text from file
@@ -66,7 +69,8 @@ export default function NoteModal({ note, initialRect, onClose, onTogglePin, onS
       let extractedText = '';
 
       if (file.type === 'application/pdf') {
-        // Extract from PDF
+        // Extract from PDF - use dynamic import
+        const pdfjsLib = await import('pdfjs-dist');
         const arrayBuffer = await file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         const numPages = pdf.numPages;
