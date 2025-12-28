@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Note } from "./NoteCard";
 import { API } from "@/services/API";
 import { useCollaboratorStore } from "@/store/useCollaboratorStore";
+import { useSocket } from "@/contexts/SocketContext";
 import mammoth from 'mammoth';
 
 interface NoteModalProps {
@@ -26,28 +27,62 @@ export default function NoteModal({ note, initialRect, onClose, onTogglePin, onS
   const panelRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  
+  const { socket, isConnected } = useSocket();
+  const isRemoteUpdate = useRef(false);
 
-  // Auto-save logic
+  // Join room and listen for updates
   useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    socket.emit('join-note', { noteId: note.id });
+    console.log('Joined note room:', note.id);
+
+    const onNoteUpdated = (data: { title: string; content: string; updatedBy: string }) => {
+        console.log('Remote update received');
+        isRemoteUpdate.current = true;
+        setTitle(data.title);
+        setContent(data.content);
+        // We can also trigger onSave used by parent to update list without API call
+        // onSave({ ...note, title: data.title, content: data.content, updatedAt: new Date() });
+    };
+
+    socket.on('note-updated', onNoteUpdated);
+
+    return () => {
+        socket.emit('leave-note', { noteId: note.id });
+        socket.off('note-updated', onNoteUpdated);
+    };
+  }, [socket, isConnected, note.id]);
+
+  // Sync changes (Socket emit + Fallback)
+  useEffect(() => {
+    // Skip if this change came from remote
+    if (isRemoteUpdate.current) {
+        isRemoteUpdate.current = false;
+        return;
+    }
+
     const timer = setTimeout(() => {
-        // Only save if changes detected and title/content are not strictly equal to initial prop (though local state is what matters for "latest")
-        // We can just save whatever is current state after delay
-        if (title !== note.title || content !== note.content) {
-            console.log("Auto-saving...");
-            const updatedNote = { ...note, title, content, updatedAt: new Date() };
-            
-            // Call API
-            API.notes.update(note.id, { title, content })
+        if (title === note.title && content === note.content) return;
+
+        // If socket connected and we can edit, emit update
+        if (socket && isConnected && canEdit) { // check canEdit to be safe
+            socket.emit('note-update', { noteId: note.id, title, content });
+            onSave({ ...note, title, content, updatedAt: new Date() }); // Optimistic update parent
+        } else {
+            // Fallback to API if socket not connected
+             console.log("Socket disconnected, saving via API...");
+             API.notes.update(note.id, { title, content })
                 .then(() => {
-                    console.log("Auto-save successful");
-                    onSave(updatedNote); // Update parent state
+                    onSave({ ...note, title, content, updatedAt: new Date() });
                 })
                 .catch(err => console.error("Auto-save failed", err));
         }
-    }, 2000);
+    }, 500); // 500ms debounce
 
     return () => clearTimeout(timer);
-  }, [title, content, note, onSave]);
+  }, [title, content, note, onSave, socket, isConnected, canEdit]);
 
   const openPanel = useCollaboratorStore(state => state.openPanel);
 

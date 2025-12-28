@@ -6,13 +6,12 @@ import DeleteNoteDialog from './DeleteNoteDialog';
 interface NotesGridProps {
   notes: Note[];
   onTogglePin: (id: string) => void;
-  onArchive: (id: string) => void;
   onUpdateNote: (updated: Note) => void;
   onOpen: (note: Note, rect?: DOMRect) => void;
   onRefresh: () => void; // Need refresh to update list after delete
 }
 
-export default function NotesGrid({ notes, onTogglePin, onArchive, onUpdateNote, onOpen, onRefresh }: NotesGridProps) {
+export default function NotesGrid({ notes, onTogglePin, onUpdateNote, onOpen, onRefresh }: NotesGridProps) {
   const pinnedNotes = notes.filter((note) => note.isPinned);
   const otherNotes = notes.filter((note) => !note.isPinned);
 
@@ -50,7 +49,7 @@ export default function NotesGrid({ notes, onTogglePin, onArchive, onUpdateNote,
                 key={note.id}
                 note={note}
                 onTogglePin={onTogglePin}
-                onArchive={onArchive}
+
                 onDelete={handleDeleteRequest}
                 onOpen={onOpen}
               />
@@ -71,7 +70,7 @@ export default function NotesGrid({ notes, onTogglePin, onArchive, onUpdateNote,
                 key={note.id}
                 note={note}
                 onTogglePin={onTogglePin}
-                onArchive={onArchive}
+
                 onDelete={handleDeleteRequest}
                 onOpen={onOpen}
               />

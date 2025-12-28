@@ -12,6 +12,8 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useRequestsStore } from '@/store/useRequestsStore';
 import { useRouter } from 'next/navigation';
 import { API } from '@/services/API';
+import { useSocket } from '@/contexts/SocketContext';
+import { useSearchStore } from '@/store/useSearchStore';
 
 export default function NotesPage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -27,6 +29,49 @@ export default function NotesPage() {
 
   // Notes state (initially empty or fetched)
   const [notes, setNotes] = useState<Note[]>([]);
+  const { socket, isConnected } = useSocket();
+  const { searchQuery, sortBy, sortOrder } = useSearchStore();
+
+  // Filter and sort notes
+  const filteredNotes = notes.filter(note => {
+    const query = searchQuery.toLowerCase();
+    return note.title.toLowerCase().includes(query) || note.content.toLowerCase().includes(query);
+  }).sort((a, b) => {
+    let comparison = 0;
+    if (sortBy === 'title') {
+        comparison = a.title.localeCompare(b.title);
+    } else if (sortBy === 'created') {
+        comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    } else { // modified
+        comparison = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+    }
+    return sortOrder === 'asc' ? comparison : -comparison;
+  });
+
+  // Real-time dashboard updates
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    const onDashboardUpdate = (data: { noteId: string; title: string; content: string; updatedBy: string; timestamp: string }) => {
+        setNotes(prevNotes => prevNotes.map(n => {
+            if (n.id === data.noteId) {
+                return {
+                    ...n,
+                    title: data.title,
+                    content: data.content,
+                    updatedAt: new Date(data.timestamp)
+                };
+            }
+            return n;
+        }));
+    };
+
+    socket.on('dashboard-note-update', onDashboardUpdate);
+
+    return () => {
+        socket.off('dashboard-note-update', onDashboardUpdate);
+    };
+  }, [socket, isConnected]);
 
   // Fetch notes function
   const fetchNotes = () => {
@@ -52,7 +97,11 @@ export default function NotesPage() {
                   createdAt: new Date(n.updatedAt),
                   updatedAt: new Date(n.updatedAt),
                   isOwned: false,
+                  permission: n.requests?.[0]?.permission || 'READ_ONLY',
               }));
+
+              console.log('Shared Notes Debug:', res.data.other);
+              console.log('Mapped Other Notes:', otherNotes);
               
               setNotes([...ownedNotes, ...otherNotes]);
           })
@@ -98,10 +147,7 @@ export default function NotesPage() {
     );
   };
 
-  const handleArchive = (id: string) => {
-    console.log('Archive note:', id);
-    setNotes((prevNotes) => prevNotes.filter((note) => note.id !== id));
-  };
+
 
   const handleUpdateNote = async (updated: Note) => {
     // Optimistic update
@@ -124,9 +170,8 @@ export default function NotesPage() {
 
           {/* Notes Grid */}
           <NotesGrid
-            notes={notes}
+            notes={filteredNotes}
             onTogglePin={handleTogglePin}
-            onArchive={handleArchive}
             onUpdateNote={handleUpdateNote}
             onRefresh={fetchNotes}
             onOpen={(note, rect) => {

@@ -17,13 +17,12 @@ export interface Note {
 interface NoteCardProps {
   note: Note;
   onTogglePin: (id: string) => void;
-  onArchive: (id: string) => void;
   onDelete: (note: Note) => void;
   onOpen?: (note: Note, rect?: DOMRect) => void;
 }
 
 
-export default function NoteCard({ note, onTogglePin, onArchive, onDelete, onOpen }: NoteCardProps) {
+export default function NoteCard({ note, onTogglePin, onDelete, onOpen }: NoteCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
 
@@ -77,16 +76,6 @@ export default function NoteCard({ note, onTogglePin, onArchive, onDelete, onOpe
             }`}
         >
           <CollaboratorButton noteId={note.id} />
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onArchive(note.id);
-            }}
-            className="p-1.5 hover:bg-slate-100 rounded-full text-slate-500"
-            title="Archive"
-          >
-            <span className="material-symbols-outlined text-[18px]">archive</span>
-          </button>
           
           <div className="relative ml-auto">
             <button
