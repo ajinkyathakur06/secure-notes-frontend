@@ -108,16 +108,9 @@ export const useCollaboratorStore = create<CollaboratorStoreState>((set, get) =>
 
             await API.share.createRequest({
                 noteId: currentNoteId,
-                receiverId: email, // This API likely expects email or we need to find user first.
-                // Wait, DTO says receiverId.
-                // share.service.ts createShare takes DTO with receiverEmail? 
-                // Let's check share.service.ts or component.
-                // InviteCollaboratorForm passes email.
-                // API.ts ShareRequestDto says `receiverId: string`. 
-                // MISMATCH DETECTED.
-                // However, I am only implementing UPDATE PERMISSION now.
-                // I will stick to updateCollaboratorPermission.
-            } as any); // Temporary cast if type mismatch, but focus is updatePermission.
+                receiverEmail: email,
+                permission,
+            });
 
             // Re-fetch to show pending state
             await get().fetchCollaborators(currentNoteId);

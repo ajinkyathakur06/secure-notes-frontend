@@ -25,6 +25,24 @@ api.interceptors.request.use(
     }
 );
 
+// Response interceptor to handle 401 (token expired) errors
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            // Token expired or invalid - clear auth state and redirect to login
+            const { logout } = useAuthStore.getState();
+            logout();
+
+            // Only redirect if we're in the browser
+            if (typeof window !== 'undefined') {
+                window.location.href = '/auth/login';
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
 // --- Request DTOs ---
 
 export interface SignupDto {
