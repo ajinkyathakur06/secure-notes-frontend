@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { API, SharedNoteRequest } from '@/services/API';
+import { API } from '@/services/API';
+import { SharedNoteRequest } from '@/services/interfaces';
 
 
 
