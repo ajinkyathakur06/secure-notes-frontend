@@ -3,7 +3,11 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-export default function MobileNav() {
+interface MobileNavProps {
+  onCreateNote?: () => void;
+}
+
+export default function MobileNav({ onCreateNote }: MobileNavProps) {
   const pathname = usePathname();
 
   const getLinkClass = (path: string) => {
@@ -18,9 +22,14 @@ export default function MobileNav() {
   return (
     <>
       {/* Mobile FAB */}
-      {/* <button className="md:hidden fixed bottom-20 right-4 h-14 w-14 bg-primary text-white rounded-2xl shadow-lg flex items-center justify-center hover:bg-blue-600 transition-colors z-20">
-        <span className="material-symbols-outlined text-3xl">add</span>
-      </button> */}
+      {onCreateNote && (
+        <button 
+          onClick={onCreateNote}
+          className="md:hidden fixed bottom-20 right-4 h-14 w-14 bg-primary text-white rounded-2xl shadow-lg flex items-center justify-center hover:bg-blue-600 transition-colors z-20"
+        >
+          <span className="material-symbols-outlined text-3xl">add</span>
+        </button>
+      )}
 
       {/* Mobile Bottom Navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 w-full h-16 bg-surface-light border-t border-slate-200 flex items-center justify-around z-30">
