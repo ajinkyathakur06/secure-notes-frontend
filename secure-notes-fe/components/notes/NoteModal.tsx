@@ -277,8 +277,8 @@ export default function NoteModal({ note, initialRect, onClose, onTogglePin, onS
           </button>
         </header>
 
-        <div className="px-6 pb-6 flex-1 overflow-auto">
-          <div className="mb-3">
+        <div className="px-6 pb-6 flex-1 overflow-auto flex flex-col">
+          <div className="mb-3 flex-1 h-full">
             <textarea
               ref={textareaRef}
               value={content}

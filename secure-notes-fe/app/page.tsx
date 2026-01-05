@@ -119,7 +119,7 @@ export default function NotesPage() {
 
   const handleCreateNote = async () => {
     try {
-      const res = await API.notes.create({ title: 'Untitled', content: ' ' });
+      const res = await API.notes.create({ title: 'Untitled', content: '' });
       const newNoteData = res.data;
       
       const newNote: Note = {
