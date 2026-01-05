@@ -183,7 +183,7 @@ export default function NotesPage() {
       </div>
 
       {/* Mobile Navigation */}
-      <MobileNav />
+      <MobileNav onCreateNote={handleCreateNote} />
 
       {/* Note Modal */}
       {selectedNote && (

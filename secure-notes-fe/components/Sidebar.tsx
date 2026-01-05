@@ -79,7 +79,7 @@ export default function Sidebar() {
           <span className="font-medium text-sm">Trash</span>
         </Link>
 
-        <div className="pt-4 mt-4 border-t border-slate-100">
+        {/* <div className="pt-4 mt-4 border-t border-slate-100">
           <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
             Labels
           </p>
@@ -97,7 +97,7 @@ export default function Sidebar() {
             <span className={`material-symbols-outlined text-[20px] ${pathname === '/label/work' ? 'fill-1' : ''}`}>label</span>
             <span className="font-medium text-sm">Work</span>
           </Link>
-        </div>
+        </div> */}
       </nav>
 
       <div className="p-4 border-t border-slate-200 relative">
