@@ -1,25 +1,6 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
-import ClientLayout from "./ClientLayout";
-import GlobalLoader from "@/components/GlobalLoader";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-  weight: ["400", "500", "700", "900"],
-});
+import ClientProviders from "./ClientProviders";
 
 export const metadata: Metadata = {
   title: "Secure Notes App",
@@ -28,9 +9,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
       <head>
@@ -41,11 +22,8 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased `}
-      >
-        <GlobalLoader />
-        <ClientLayout>{children}</ClientLayout>
+      <body>
+        <ClientProviders>{children}</ClientProviders>
       </body>
     </html>
   );
